@@ -16,6 +16,7 @@
 		14D75D5E1E84DCEC006EC27F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 14D75D5C1E84DCEC006EC27F /* LaunchScreen.storyboard */; };
 		14D75D641E84DCF9006EC27F /* UZTextView.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 14D75D401E84DB9E006EC27F /* UZTextView.framework */; };
 		14D75D651E84DCF9006EC27F /* UZTextView.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 14D75D401E84DB9E006EC27F /* UZTextView.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		14D75D6A1E850A65006EC27F /* data.html in Resources */ = {isa = PBXBuildFile; fileRef = 14D75D691E850A65006EC27F /* data.html */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +55,7 @@
 		14D75D5A1E84DCEC006EC27F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		14D75D5D1E84DCEC006EC27F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		14D75D5F1E84DCEC006EC27F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		14D75D691E850A65006EC27F /* data.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = data.html; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,8 +98,8 @@
 		14D75D421E84DB9E006EC27F /* UZTextView */ = {
 			isa = PBXGroup;
 			children = (
-				14D75D4B1E84DBE2006EC27F /* UZTextView.swift */,
 				14D75D431E84DB9E006EC27F /* UZTextView.h */,
+				14D75D4B1E84DBE2006EC27F /* UZTextView.swift */,
 				14D75D441E84DB9E006EC27F /* Info.plist */,
 			);
 			path = UZTextView;
@@ -106,6 +108,7 @@
 		14D75D521E84DCEC006EC27F /* UZTextViewSample */ = {
 			isa = PBXGroup;
 			children = (
+				14D75D691E850A65006EC27F /* data.html */,
 				14D75D531E84DCEC006EC27F /* AppDelegate.swift */,
 				14D75D551E84DCEC006EC27F /* ViewController.swift */,
 				14D75D571E84DCEC006EC27F /* Main.storyboard */,
@@ -223,6 +226,7 @@
 			files = (
 				14D75D5E1E84DCEC006EC27F /* LaunchScreen.storyboard in Resources */,
 				14D75D5B1E84DCEC006EC27F /* Assets.xcassets in Resources */,
+				14D75D6A1E850A65006EC27F /* data.html in Resources */,
 				14D75D591E84DCEC006EC27F /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -464,6 +468,7 @@
 				14D75D4A1E84DB9E006EC27F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		14D75D601E84DCEC006EC27F /* Build configuration list for PBXNativeTarget "UZTextViewSample" */ = {
 			isa = XCConfigurationList;
@@ -472,6 +477,7 @@
 				14D75D621E84DCEC006EC27F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

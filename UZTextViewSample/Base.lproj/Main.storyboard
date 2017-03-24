@@ -1,14 +1,18 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11134" systemVersion="15F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11106"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="UZTextViewSample" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
@@ -16,11 +20,60 @@
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bdz-cP-y90" customClass="UZTextView" customModule="UZTextView">
+                                <rect key="frame" x="0.0" y="20" width="183.5" height="319.5"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Tav-EN-z1O" customClass="UZTextView" customModule="UZTextView">
+                                <rect key="frame" x="0.0" y="347.5" width="183.5" height="319.5"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="RB6-5S-dLY" customClass="UZTextView" customModule="UZTextView">
+                                <rect key="frame" x="191.5" y="20" width="183.5" height="319.5"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="unl-Ho-c1p" customClass="UZTextView" customModule="UZTextView">
+                                <rect key="frame" x="191.5" y="347.5" width="183.5" height="319.5"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" white="0.75" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="RB6-5S-dLY" firstAttribute="width" secondItem="bdz-cP-y90" secondAttribute="width" id="0TI-NL-y5q"/>
+                            <constraint firstAttribute="trailing" secondItem="unl-Ho-c1p" secondAttribute="trailing" id="3SX-K5-XWk"/>
+                            <constraint firstItem="Tav-EN-z1O" firstAttribute="width" secondItem="bdz-cP-y90" secondAttribute="width" id="3WO-Jl-IzD"/>
+                            <constraint firstItem="RB6-5S-dLY" firstAttribute="leading" secondItem="bdz-cP-y90" secondAttribute="trailing" constant="8" id="4Ri-Bc-4B7"/>
+                            <constraint firstItem="Tav-EN-z1O" firstAttribute="height" secondItem="bdz-cP-y90" secondAttribute="height" id="7Ax-bB-T0J"/>
+                            <constraint firstItem="unl-Ho-c1p" firstAttribute="leading" secondItem="Tav-EN-z1O" secondAttribute="trailing" constant="8" id="AGf-Zr-1T1"/>
+                            <constraint firstItem="bdz-cP-y90" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="BFP-Ke-r26"/>
+                            <constraint firstAttribute="trailing" secondItem="RB6-5S-dLY" secondAttribute="trailing" id="CrG-2A-D35"/>
+                            <constraint firstItem="unl-Ho-c1p" firstAttribute="top" secondItem="RB6-5S-dLY" secondAttribute="bottom" constant="8" id="GPn-6O-s3R"/>
+                            <constraint firstItem="Tav-EN-z1O" firstAttribute="top" secondItem="bdz-cP-y90" secondAttribute="bottom" constant="8" id="Yln-WY-5y9"/>
+                            <constraint firstItem="Tav-EN-z1O" firstAttribute="top" secondItem="bdz-cP-y90" secondAttribute="bottom" constant="8" id="a7R-93-clA"/>
+                            <constraint firstItem="unl-Ho-c1p" firstAttribute="leading" secondItem="Tav-EN-z1O" secondAttribute="trailing" constant="8" id="aq5-dy-p61"/>
+                            <constraint firstItem="bdz-cP-y90" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="bVZ-Nq-I0O"/>
+                            <constraint firstItem="RB6-5S-dLY" firstAttribute="height" secondItem="bdz-cP-y90" secondAttribute="height" id="cyA-Zg-nga"/>
+                            <constraint firstItem="bdz-cP-y90" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="ede-QF-XPk"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="unl-Ho-c1p" secondAttribute="bottom" id="h74-KU-J13"/>
+                            <constraint firstItem="bdz-cP-y90" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="iSV-45-o7Q"/>
+                            <constraint firstItem="Tav-EN-z1O" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="igu-Ri-jIC"/>
+                            <constraint firstItem="RB6-5S-dLY" firstAttribute="leading" secondItem="bdz-cP-y90" secondAttribute="trailing" constant="8" id="inq-Jt-0m7"/>
+                            <constraint firstItem="unl-Ho-c1p" firstAttribute="height" secondItem="bdz-cP-y90" secondAttribute="height" id="kax-dP-aWg"/>
+                            <constraint firstItem="RB6-5S-dLY" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="nAJ-m1-17y"/>
+                            <constraint firstItem="RB6-5S-dLY" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="nmi-Pa-Z7M"/>
+                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="Tav-EN-z1O" secondAttribute="bottom" id="wap-ic-dbD"/>
+                            <constraint firstItem="unl-Ho-c1p" firstAttribute="width" secondItem="bdz-cP-y90" secondAttribute="width" id="zFl-XN-pfs"/>
+                            <constraint firstItem="unl-Ho-c1p" firstAttribute="top" secondItem="RB6-5S-dLY" secondAttribute="bottom" constant="8" id="zTW-ft-jgk"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="textView" destination="bdz-cP-y90" id="aaf-VM-XEm"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
+            <point key="canvasLocation" x="129" y="61"/>
         </scene>
     </scenes>
 </document>

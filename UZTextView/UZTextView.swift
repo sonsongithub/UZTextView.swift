@@ -60,7 +60,7 @@ public class UZTextView: UIView {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         guard let ctframe = ctframe else { return }
         
-        context.translateBy(x: margin.left, y: margin.top)
+        context.translateBy(x: contentInset.left, y: contentInset.top)
         context.saveGState()
         context.translateBy(x: 0, y: contentSize.height)
         context.scaleBy(x: 1, y: -1)

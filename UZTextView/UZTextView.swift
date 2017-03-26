@@ -113,7 +113,7 @@ fileprivate func CTLineGetStringNSRange(_ line: CTLine) -> NSRange {
     return NSRange(location: lineCFRange.location, length: lineCFRange.length)
 }
 
-fileprivate func CTFrameGetLineInfo(frame: CTFrame) throws -> [LineInfo] {
+fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) throws -> [LineInfo] {
     guard let lines = CTFrameGetLines(frame) as? [CTLine] else { throw UZTextViewError.canNotGetFrame }
     var lineOrigins = [CGPoint](repeating: CGPoint.zero, count: lines.count)
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), &lineOrigins)
@@ -275,7 +275,7 @@ public class UZTextView: UIView {
     }
     
     private func drawTextBox(_ context: CGContext) throws {
-        try CTFrameGetLineInfo(frame: ctframe).forEach({ (lineInfo) in
+        try CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
             let lineRect = lineInfo.getRect(contentSize: contentSize)
             let indices = lineInfo.range.arangeIncludingEndIndex.map({$0})
             zip(indices, indices.dropFirst()).forEach({
@@ -303,7 +303,7 @@ public class UZTextView: UIView {
     private func rectangles(with range: NSRange) -> [CGRect] {
         guard range.length > 0 else { return [] }
         do {
-            return try CTFrameGetLineInfo(frame: ctframe)
+            return try CTFrameGetLineInfo(ctframe)
             .flatMap({
                 let lineRect = $0.getRect(contentSize: contentSize)
                 let top = lineRect.minY
@@ -365,7 +365,7 @@ public class UZTextView: UIView {
             case find(index: Int)
         }
         do {
-            try CTFrameGetLineInfo(frame: ctframe).forEach({ (lineInfo) in
+            try CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
                 let lineRange = lineInfo.range
                 let lineRect = lineInfo.getRect(contentSize: contentSize)
                 guard lineRect.contains(point) else { return }

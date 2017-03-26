@@ -14,6 +14,10 @@ extension NSAttributedString {
     var fullRange: CFRange {
         return CFRange(location: 0, length: self.length)
     }
+    /// A range of all string as NSRange.
+    var fullNSRange: NSRange {
+        return NSRange(location: 0, length: self.length)
+    }
 }
 
 extension CFString {
@@ -258,59 +262,7 @@ public class UZTextView: UIView {
         drawBoundingBoxesOfAllCharacters(context)
         drawBackgroundOfSelectedCharacters(context)
         drawBackgroundOfTappedLinkCharacters(context)
-    }
-    
-    // MARK: -
-    
-    private func drawAttributedString(_ context: CGContext) {
-        context.saveGState()
-        context.translateBy(x: 0, y: contentSize.height)
-        context.scaleBy(x: 1, y: -1)
-        context.textMatrix = CGAffineTransform.identity
-        CTFrameDraw(ctframe, context)
-        context.restoreGState()
-    }
-    
-    private func drawBackgroundOfSelectedCharacters(_ context: CGContext) {
-        selectedColor.setFill()
-        rectangles(with: selectedRange).forEach({
-            context.fill($0)
-        })
-    }
-    
-    private func drawBackgroundOfTappedLinkCharacters(_ context: CGContext) {
-        tappedLinkColor.setFill()
-        rectangles(with: tappedLinkRange).forEach({
-            context.fill($0)
-        })
-    }
-    
-    private func drawBoundingBoxesOfAllCharacters(_ context: CGContext) {
-        CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
-            let lineRect = lineInfo.getRect(contentSize: contentSize)
-            let indices = lineInfo.range.arangeIncludingEndIndex.map({$0})
-            zip(indices, indices.dropFirst()).forEach({
-                let leftOffset = CTLineGetOffsetForStringIndex(lineInfo.line, $0.0, nil)
-                let rightOffset = CTLineGetOffsetForStringIndex(lineInfo.line, $0.1, nil)
-                let r = CGRect(x: lineInfo.origin.x + leftOffset, y: lineRect.minY, width: rightOffset - leftOffset, height: lineRect.size.height)
-                context.stroke(r)
-            })
-        })
-    }
-    
-    // MARK: -
-    
-    private func testTappedLinkRange() {
-        if tappedLinkRange != NSRange.notFound {
-            for i in tappedLinkRange.location..<(tappedLinkRange.location + tappedLinkRange.length) {
-                var effectiveRange = NSRange.notFound
-                let attribute = attributedString.attributes(at: i, effectiveRange: &effectiveRange)
-                guard let link = attribute[NSLinkAttributeName] else { continue }
-                print(link)
-                break
-            }
-            tappedLinkRange = NSRange.notFound
-        }
+        drawStrikeThroughLine(context)
     }
     
     // MARK: -
@@ -339,6 +291,95 @@ public class UZTextView: UIView {
     
     // MARK: -
     
+    /**
+     Draw the attributed string in the view.
+     - parameter context: The current graphics context.
+     */
+    private func drawAttributedString(_ context: CGContext) {
+        context.saveGState()
+        context.translateBy(x: 0, y: contentSize.height)
+        context.scaleBy(x: 1, y: -1)
+        context.textMatrix = CGAffineTransform.identity
+        CTFrameDraw(ctframe, context)
+        context.restoreGState()
+    }
+    
+    /**
+     Draw the background rectangles behind the selected characters.
+     - parameter context: The current graphics context.
+     */
+    private func drawBackgroundOfSelectedCharacters(_ context: CGContext) {
+        selectedColor.setFill()
+        rectangles(with: selectedRange).forEach({
+            context.fill($0)
+        })
+    }
+    
+    /**
+     Draw the background rectangles behind the selected characters.
+     - parameter context: The current graphics context.
+     */
+    private func drawBackgroundOfTappedLinkCharacters(_ context: CGContext) {
+        tappedLinkColor.setFill()
+        rectangles(with: tappedLinkRange).forEach({
+            context.fill($0)
+        })
+    }
+    
+    /**
+     Draw the background rectangles behind the selected characters.
+     - parameter context: The current graphics context.
+     */
+    private func drawBoundingBoxesOfAllCharacters(_ context: CGContext) {
+        CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
+            let lineRect = lineInfo.getRect(contentSize: contentSize)
+            let indices = lineInfo.range.arangeIncludingEndIndex.map({$0})
+            zip(indices, indices.dropFirst()).forEach({
+                let leftOffset = CTLineGetOffsetForStringIndex(lineInfo.line, $0.0, nil)
+                let rightOffset = CTLineGetOffsetForStringIndex(lineInfo.line, $0.1, nil)
+                let r = CGRect(x: lineInfo.origin.x + leftOffset, y: lineRect.minY, width: rightOffset - leftOffset, height: lineRect.size.height)
+                context.stroke(r)
+            })
+        })
+    }
+    
+    /**
+     Draw the strike through lines over the specified characters.
+     - parameter context: The current graphics context.
+     */
+    private func drawStrikeThroughLine(_ context: CGContext) {
+        attributedString.enumerateAttribute(NSStrikethroughStyleAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, stop) in
+            guard let width = value as? CGFloat else { return }
+            rectangles(with: range).forEach({
+                context.setLineWidth(width)
+                context.move(to: CGPoint(x: $0.minX, y: $0.midY))
+                context.addLine(to: CGPoint(x: $0.maxX, y: $0.midY))
+                context.drawPath(using: .stroke)
+            })
+        }
+    }
+
+    // MARK: -
+    
+    /**
+     Check whether the user tapped a link or did not. If any link is tapped, callback to the delegate it.
+     */
+    private func testTappedLinkRange() {
+        if tappedLinkRange != NSRange.notFound {
+            for i in tappedLinkRange.arange {
+                var effectiveRange = NSRange.notFound
+                let attribute = attributedString.attributes(at: i, effectiveRange: &effectiveRange)
+                guard let link = attribute[NSLinkAttributeName] else { continue }
+                print(link)
+                break
+            }
+            tappedLinkRange = NSRange.notFound
+        }
+    }
+    
+    /**
+     Check whether the user tapped a link or did not. If any link is tapped, callback to the delegate it.
+     */
     private func updateTappedLinkRange(at point: CGPoint) {
         let index = characterIndex(at: point)
         guard index != NSNotFound else { tappedLinkRange = NSRange.notFound; return }

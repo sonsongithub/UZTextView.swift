@@ -87,10 +87,12 @@ extension UITouch {
      - parameter inset: The distance that the string rendering area is inset from the view.
      - returns: CGPoint structure at which the touch took place with respect to the content insets.
      */
-    fileprivate func location(in view: UIView, inset: UIEdgeInsets) -> CGPoint {
+    fileprivate func location(in view: UIView, inset: UIEdgeInsets, scale: CGFloat) -> CGPoint {
         var point = self.location(in: view)
         point.x -= inset.left
         point.y -= inset.top
+        point.x /= scale
+        point.y /= scale
         return point
     }
 }
@@ -102,10 +104,12 @@ extension UIGestureRecognizer {
      - parameter inset: The distance that the string rendering area is inset from the view.
      - returns: CGPoint structure that points a location where UIGestureRecognizer recognizes an event with respect to the content insets.
      */
-    fileprivate func location(in view: UIView, inset: UIEdgeInsets) -> CGPoint {
+    fileprivate func location(in view: UIView, inset: UIEdgeInsets, scale: CGFloat) -> CGPoint {
         var point = self.location(in: view)
         point.x -= inset.left
         point.y -= inset.top
+        point.x /= scale
+        point.y /= scale
         return point
     }
 }
@@ -217,6 +221,15 @@ public class UZTextView: UIView {
         }
     }
     
+    /// Scaling parameter of string rendering.
+    /// When scale is not one, attributed string is rendered without any warpping.
+    /// Scale must be more than zero.
+    public var scale: CGFloat = CGFloat(1) {
+        didSet {
+            updateLayout()
+        }
+    }
+    
     /// The text displayed by the label, read only
     public var string: String {
         return attributedString.string
@@ -258,6 +271,10 @@ public class UZTextView: UIView {
         // Offset
         context.translateBy(x: contentInset.left, y: contentInset.top)
         
+        if scale != 1 {
+            context.scaleBy(x: scale, y: scale)
+        }
+        
         drawAttributedString(context)
         drawBoundingBoxesOfAllCharacters(context)
         drawBackgroundOfSelectedCharacters(context)
@@ -269,7 +286,7 @@ public class UZTextView: UIView {
     
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
-        let point = touch.location(in: self, inset: contentInset)
+        let point = touch.location(in: self, inset: contentInset, scale: scale)
         updateTappedLinkRange(at: point)
         setNeedsDisplay()
     }
@@ -394,8 +411,18 @@ public class UZTextView: UIView {
      This method must be called after resizing the view, updating the string and so on.
      */
     private func updateLayout() {
+        if scale == 0 || scale < 0 {
+            scale = 1
+        }
+        
         let horizontalMargin = contentInset.left + contentInset.right
-        contentSize = CGSize(width: self.frame.size.width - horizontalMargin, height: CGFloat.greatestFiniteMagnitude)
+        
+        if scale != 1 {
+            contentSize = CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        } else {
+            contentSize = CGSize(width: self.frame.size.width - horizontalMargin, height: CGFloat.greatestFiniteMagnitude)
+        }
+        
         let frameSetter = CTFramesetterCreateWithAttributedString(attributedString)
         let frameSize = CTFramesetterSuggestFrameSizeWithConstraints(frameSetter, attributedString.fullRange, nil, contentSize, nil)
         contentSize.height = frameSize.height
@@ -422,10 +449,10 @@ public class UZTextView: UIView {
     func didChangeLongPressGesture(_ gestureRecognizer: UILongPressGestureRecognizer) {
         switch gestureRecognizer.state {
         case .began:
-            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset))
+            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset, scale: scale))
             self.setNeedsDisplay()
         case .changed:
-            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset))
+            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset, scale: scale))
             self.setNeedsDisplay()
         default:
             do {}

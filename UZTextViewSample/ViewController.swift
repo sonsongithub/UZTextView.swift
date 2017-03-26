@@ -17,6 +17,8 @@ class ViewController: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
         
         
+        textView.scale = 0.3
+        
         do {
             let data = try Data(contentsOf: Bundle.main.url(forResource: "data", withExtension: "html")!)
             let options: [String: Any] = [

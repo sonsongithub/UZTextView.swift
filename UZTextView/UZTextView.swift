@@ -292,6 +292,11 @@ public class UZTextView: UIView {
     }
     
     public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        
+        /// ignore z movement
+        guard touch.location(in: self) == touch.previousLocation(in: self) else { return }
+        
         tappedLinkRange = NSRange.notFound
         setNeedsDisplay()
     }

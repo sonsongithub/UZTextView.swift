@@ -10,14 +10,17 @@ import UIKit
 import UZTextView
 
 class ViewController: UIViewController {
-    @IBOutlet var textView: UZTextView!
+    @IBOutlet var textView1: UZTextView!
+    @IBOutlet var textView2: UZTextView!
+    @IBOutlet var textView3: UZTextView!
+    @IBOutlet var textView4: UZTextView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
         
-        textView.scale = 0.3
+        textView1.scale = 0.3
         
         do {
             let data = try Data(contentsOf: Bundle.main.url(forResource: "data", withExtension: "html")!)
@@ -29,7 +32,8 @@ class ViewController: UIViewController {
             attr.addAttribute(NSFontAttributeName,
                               value: UIFont.systemFont(ofSize: 20),
                               range: NSRange(location: 0, length: attr.length))
-            textView.attributedString = attr
+            textView1.attributedString = attr
+            textView2.attributedString = attr
             
         } catch {
             print(error)

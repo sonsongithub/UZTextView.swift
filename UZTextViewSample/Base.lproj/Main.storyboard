@@ -68,7 +68,10 @@
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="textView" destination="bdz-cP-y90" id="aaf-VM-XEm"/>
+                        <outlet property="textView1" destination="bdz-cP-y90" id="wzU-rB-tsP"/>
+                        <outlet property="textView2" destination="RB6-5S-dLY" id="xGS-sL-Emr"/>
+                        <outlet property="textView3" destination="Tav-EN-z1O" id="zBP-z5-trX"/>
+                        <outlet property="textView4" destination="unl-Ho-c1p" id="bSv-kg-E9A"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

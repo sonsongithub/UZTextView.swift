@@ -10,12 +10,14 @@ import UIKit
 import CoreText
 
 extension NSAttributedString {
+    /// A range of all string as CFRange.
     var fullRange: CFRange {
         return CFRange(location: 0, length: self.length)
     }
 }
 
 extension CFString {
+    /// A range of all string as CFRange.
     var fullRange: CFRange {
         let length = CFStringGetLength(self)
         return CFRange(location: 0, length: length)
@@ -23,101 +25,154 @@ extension CFString {
 }
 
 extension String {
+    /// A range of all string as CFRange.
     var fullRange: CFRange {
         return CFRange(location: 0, length: self.utf16.count)
     }
 }
 
 extension CFRange {
+    /// A range of all string as CFRange.
     static var zero: CFRange {
         return CFRange(location: 0, length: 0)
     }
     
-    var arange: CountableRange<Int> {
-        return self.location..<(self.location + self.length)
-    }
-}
-
-extension NSRange {
+    /// Range as CountableRange<Int> including an end point.
     var arangeIncludingEndIndex: CountableRange<Int> {
         return self.location..<(self.location + self.length + 1)
     }
     
+    /// Range as CountableRange<Int> excluding an end point.
     var arange: CountableRange<Int> {
         return self.location..<(self.location + self.length)
     }
     
-    static var zero: NSRange {
-        return NSRange(location: 0, length: 0)
+}
+
+extension NSRange {
+    /// Range as CountableRange<Int> including an end point.
+    var arangeIncludingEndIndex: CountableRange<Int> {
+        return self.location..<(self.location + self.length + 1)
     }
     
+    /// Range as CountableRange<Int> excluding an end point.
+    var arange: CountableRange<Int> {
+        return self.location..<(self.location + self.length)
+    }
+    
+    /// Range means that it does not found anything.
     static var notFound: NSRange {
         return NSRange(location: NSNotFound, length: 0)
     }
     
+    /// Overload
     static func == (lhs: NSRange, rhs: NSRange) -> Bool {
         return lhs.location == rhs.location && lhs.length == rhs.length
     }
     
+    /// Overload
     static func != (lhs: NSRange, rhs: NSRange) -> Bool {
         return lhs.location != rhs.location || lhs.length != rhs.length
     }
 }
 
 extension UITouch {
-    fileprivate func location(in view: UIView, margin: UIEdgeInsets) -> CGPoint {
+    /**
+     Returns point with respect to the content insets.
+     - parameter view: View on which the touch took place.
+     - parameter inset: The distance that the string rendering area is inset from the view.
+     - returns: CGPoint structure at which the touch took place with respect to the content insets.
+     */
+    fileprivate func location(in view: UIView, inset: UIEdgeInsets) -> CGPoint {
         var point = self.location(in: view)
-        point.x -= margin.left
-        point.y -= margin.top
+        point.x -= inset.left
+        point.y -= inset.top
         return point
     }
 }
 
 extension UIGestureRecognizer {
-    fileprivate func location(in view: UIView, margin: UIEdgeInsets) -> CGPoint {
+    /**
+     Returns point which is offset by margin.
+     - parameter view: A UIView object on which the gesture took place.
+     - parameter inset: The distance that the string rendering area is inset from the view.
+     - returns: CGPoint structure that points a location where UIGestureRecognizer recognizes an event with respect to the content insets.
+     */
+    fileprivate func location(in view: UIView, inset: UIEdgeInsets) -> CGPoint {
         var point = self.location(in: view)
-        point.x -= margin.left
-        point.y -= margin.top
+        point.x -= inset.left
+        point.y -= inset.top
         return point
     }
 }
 
-private func CTLineGetTypographicBounds_(_ line: CTLine) -> (Double, CGFloat, CGFloat, CGFloat) {
+/**
+ Typographic bounds of a CTLine.
+ */
+fileprivate struct TypographicBounds {
+    let width: CGFloat
+    let ascent: CGFloat
+    let descent: CGFloat
+    let leading: CGFloat
+}
+
+/**
+ Get typofrahics bounds from CTLine.
+ - parameter line: The line from which to obtain the typofrahics bounds.
+ - returns: A TypographicBounds structure that contains attributes of specified line.
+ */
+fileprivate func CTLineGetTypographicBounds(_ line: CTLine) -> TypographicBounds {
     var ascent: CGFloat = 0
     var descent: CGFloat = 0
     var leading: CGFloat = 0
     let width = CTLineGetTypographicBounds(line, &ascent, &descent, &leading)
-    return (width, ascent, descent, leading)
+    return TypographicBounds(width: CGFloat(width), ascent: ascent, descent: descent, leading: leading)
 }
 
+/**
+ Property of line.
+ */
 struct LineInfo {
+    /// CTLine of a line.
     let line: CTLine
+    /// Origin of a line.
     let origin: CGPoint
+    /// Index range of a line.
     let range: NSRange
-    
+    /**
+     Returns the rectangle of a line.
+     - parameter contentSize: Size of a string content. It uses in order to compensate Y origin of line.
+     - returns: A rectangle of line as CGRect considering Y direction and Y origin.
+     */
     func getRect(contentSize: CGSize) -> CGRect {
-        let (width, ascent, descent, _) = CTLineGetTypographicBounds_(self.line)
-        let lineRectSize = CGSize(width: CGFloat(width), height: ascent + descent)
-        let lineRectOrigin = CGPoint(x: origin.x, y: origin.y - descent)
+        let typographicBounds = CTLineGetTypographicBounds(self.line)
+        let lineRectSize = CGSize(width: typographicBounds.width, height: typographicBounds.ascent + typographicBounds.descent)
+        let lineRectOrigin = CGPoint(x: origin.x, y: origin.y - typographicBounds.descent)
         let lineRectInverted = CGRect(origin: lineRectOrigin, size: lineRectSize)
         return CGRect(origin: CGPoint(x: lineRectOrigin.x, y: contentSize.height - lineRectInverted.maxY), size: lineRectSize)
     }
 }
 
-enum UZTextViewError: Error, LocalizedError {
-    case canNotGetFrame
-}
-
+/**
+ Gets the range of characters that originally spawned the glyphs in the line.
+ - parameter line: The line from which to obtain the string range.
+ - returns: A NSRange structure that contains the range over the backing store string that spawned the glyphs, or if the function fails for any reason, an empty range.
+ */
 fileprivate func CTLineGetStringNSRange(_ line: CTLine) -> NSRange {
     let lineCFRange = CTLineGetStringRange(line)
     return NSRange(location: lineCFRange.location, length: lineCFRange.length)
 }
 
-fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) throws -> [LineInfo] {
-    guard let lines = CTFrameGetLines(frame) as? [CTLine] else { throw UZTextViewError.canNotGetFrame }
+/**
+ Returns an array of LineInfo objects in the frame.
+ - parameter frame: The frame whose line array is returned.
+ - returns: Array object containing the LineInfo objects that have line object, origin and indices, or, if there are no lines in the frame, an array with no elements.
+ */
+fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
+    guard let lines = CTFrameGetLines(frame) as? [CTLine] else { return [] }
     var lineOrigins = [CGPoint](repeating: CGPoint.zero, count: lines.count)
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), &lineOrigins)
-    guard lines.count == lineOrigins.count else { throw UZTextViewError.canNotGetFrame }
+    guard lines.count == lineOrigins.count else { return [] }
     
     return zip(lines, lineOrigins).map({
         let range = CTLineGetStringNSRange($0.0)
@@ -125,31 +180,45 @@ fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) throws -> [LineInfo] {
     })
 }
 
+enum UZTextViewError: Error, LocalizedError {
+    case canNotGetFrame
+}
+
 public class UZTextView: UIView {
+    /// The CTFrame opaque type represents a frame containing multiple lines of text. The frame object is the output resulting from the text-framing process performed by a framesetter object.
     var ctframe: CTFrame!
+    /// The CTFramesetter opaque type is used to generate text frames. That is, CTFramesetter is an object factory for CTFrame objects.
     var ctframeSetter: CTFramesetter!
+    /// CGSize structure which contains the size of string which will be rendered in the view.
     var contentSize: CGSize = CGSize.zero
-    
+    /// The distance that the string rendering area is inset from the view.
     var contentInset: UIEdgeInsets = UIEdgeInsets.zero
     
+    /// UIGestureRecognizer which detects long press in order to parse words from the string of the view.
     var longPressGestureRecognizer: UILongPressGestureRecognizer?
     
+    /// NSRange structure which contains the range user currently selects text. If no text is selected, this value is set to NSRange.notFound.
     var selectedRange = NSRange.notFound
+    /// NSRange structure which contains the range user currently is tapping link object among the text. If no link object is selected, this value is set to NSRange.notFound.
     var tappedLinkRange = NSRange.notFound
     
     var selectedColor: UIColor = UIColor.blue.withAlphaComponent(0.3)
     var highlightedColor: UIColor = UIColor.yellow.withAlphaComponent(0.3)
     var tappedLinkColor: UIColor = UIColor.lightGray.withAlphaComponent(0.3)
     
+    /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {
         didSet {
             updateLayout()
         }
     }
     
+    /// The text displayed by the label, read only
     public var string: String {
         return attributedString.string
     }
+    
+    // MARK: -
     
     override public var frame: CGRect {
         didSet{
@@ -179,18 +248,42 @@ public class UZTextView: UIView {
         self.setNeedsDisplay()
     }
     
+    override public func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        
+        context.translateBy(x: contentInset.left, y: contentInset.top)
+        context.saveGState()
+        context.translateBy(x: 0, y: contentSize.height)
+        context.scaleBy(x: 1, y: -1)
+        context.textMatrix = CGAffineTransform.identity
+        CTFrameDraw(ctframe, context)
+        context.restoreGState()
+        
+        drawTextBox(context)
+        
+        selectedColor.setFill()
+        rectangles(with: selectedRange).forEach({
+            context.fill($0)
+        })
+        
+        tappedLinkColor.setFill()
+        rectangles(with: tappedLinkRange).forEach({
+            context.fill($0)
+        })
+    }
+    
+    // MARK: -
+    
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
-        let point = touch.location(in: self, margin: contentInset)
+        let point = touch.location(in: self, inset: contentInset)
         
         do {
             let index = try characterIndex(at: point)
-            if index != kCFNotFound {
-                let string = self.attributedString.string
-                let si = string.index(string.startIndex, offsetBy: index + 0)
-                let ei = string.index(string.startIndex, offsetBy: index + 1)
-                print(string.substring(with: si..<ei))
-            }
+            let string = self.attributedString.string
+            let si = string.index(string.startIndex, offsetBy: index + 0)
+            let ei = string.index(string.startIndex, offsetBy: index + 1)
+            print(string.substring(with: si..<ei))
         } catch {
             print("\(error)")
         }
@@ -222,6 +315,8 @@ public class UZTextView: UIView {
         setNeedsDisplay()
     }
     
+    // MARK: -
+    
     private func updateTappedLinkRange(at point: CGPoint) {
         do {
             let index = try characterIndex(at: point)
@@ -246,36 +341,8 @@ public class UZTextView: UIView {
         ctframeSetter = frameSetter
     }
     
-    override public func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext() else { return }
-        
-        context.translateBy(x: contentInset.left, y: contentInset.top)
-        context.saveGState()
-        context.translateBy(x: 0, y: contentSize.height)
-        context.scaleBy(x: 1, y: -1)
-        context.textMatrix = CGAffineTransform.identity
-        CTFrameDraw(ctframe, context)
-        context.restoreGState()
-        
-        do {
-            try drawTextBox(context)
-        } catch {
-            
-        }
-        
-        selectedColor.setFill()
-        rectangles(with: selectedRange).forEach({
-            context.fill($0)
-        })
-        
-        tappedLinkColor.setFill()
-        rectangles(with: tappedLinkRange).forEach({
-            context.fill($0)
-        })
-    }
-    
-    private func drawTextBox(_ context: CGContext) throws {
-        try CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
+    private func drawTextBox(_ context: CGContext) {
+        CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
             let lineRect = lineInfo.getRect(contentSize: contentSize)
             let indices = lineInfo.range.arangeIncludingEndIndex.map({$0})
             zip(indices, indices.dropFirst()).forEach({
@@ -290,10 +357,10 @@ public class UZTextView: UIView {
     func didChangeLongPressGesture(_ gestureRecognizer: UILongPressGestureRecognizer) {
         switch gestureRecognizer.state {
         case .began:
-            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, margin: contentInset))
+            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset))
             self.setNeedsDisplay()
         case .changed:
-            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, margin: contentInset))
+            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset))
             self.setNeedsDisplay()
         default:
             do {}
@@ -302,26 +369,22 @@ public class UZTextView: UIView {
     
     private func rectangles(with range: NSRange) -> [CGRect] {
         guard range.length > 0 else { return [] }
-        do {
-            return try CTFrameGetLineInfo(ctframe)
-            .flatMap({
-                let lineRect = $0.getRect(contentSize: contentSize)
-                let top = lineRect.minY
-                let height = lineRect.size.height
-                
-                let intersect = NSIntersectionRange($0.range, range)
-                
-                if intersect.length > 0 {
-                    let leftOffset = CTLineGetOffsetForStringIndex($0.line, intersect.location, nil)
-                    let rightOffset = CTLineGetOffsetForStringIndex($0.line, NSMaxRange(intersect), nil)
-                    return CGRect(x: $0.origin.x + leftOffset, y: top, width: rightOffset - leftOffset, height: height)
-                } else {
-                    return nil
-                }
-            })
-        } catch {
-            return []
-        }
+        return CTFrameGetLineInfo(ctframe)
+        .flatMap({
+            let lineRect = $0.getRect(contentSize: contentSize)
+            let top = lineRect.minY
+            let height = lineRect.size.height
+            
+            let intersect = NSIntersectionRange($0.range, range)
+            
+            if intersect.length > 0 {
+                let leftOffset = CTLineGetOffsetForStringIndex($0.line, intersect.location, nil)
+                let rightOffset = CTLineGetOffsetForStringIndex($0.line, NSMaxRange(intersect), nil)
+                return CGRect(x: $0.origin.x + leftOffset, y: top, width: rightOffset - leftOffset, height: height)
+            } else {
+                return nil
+            }
+        })
     }
     
     func rangeOfWord(at point: CGPoint) -> NSRange {

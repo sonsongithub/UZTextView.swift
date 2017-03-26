@@ -202,9 +202,9 @@ public class UZTextView: UIView {
     /// NSRange structure which contains the range user currently is tapping link object among the text. If no link object is selected, this value is set to NSRange.notFound.
     var tappedLinkRange = NSRange.notFound
     
-    var selectedColor: UIColor = UIColor.blue.withAlphaComponent(0.3)
-    var highlightedColor: UIColor = UIColor.yellow.withAlphaComponent(0.3)
-    var tappedLinkColor: UIColor = UIColor.lightGray.withAlphaComponent(0.3)
+    var selectedColor: UIColor = UIColor.blue.withAlphaComponent(0.6)
+    var highlightedColor: UIColor = UIColor.yellow.withAlphaComponent(0.6)
+    var tappedLinkColor: UIColor = UIColor.lightGray.withAlphaComponent(0.6)
     
     /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {
@@ -251,25 +251,66 @@ public class UZTextView: UIView {
     override public func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         
+        // Offset
         context.translateBy(x: contentInset.left, y: contentInset.top)
+        
+        drawAttributedString(context)
+        drawBoundingBoxesOfAllCharacters(context)
+        drawBackgroundOfSelectedCharacters(context)
+        drawBackgroundOfTappedLinkCharacters(context)
+    }
+    
+    // MARK: -
+    
+    private func drawAttributedString(_ context: CGContext) {
         context.saveGState()
         context.translateBy(x: 0, y: contentSize.height)
         context.scaleBy(x: 1, y: -1)
         context.textMatrix = CGAffineTransform.identity
         CTFrameDraw(ctframe, context)
         context.restoreGState()
-        
-        drawTextBox(context)
-        
+    }
+    
+    private func drawBackgroundOfSelectedCharacters(_ context: CGContext) {
         selectedColor.setFill()
         rectangles(with: selectedRange).forEach({
             context.fill($0)
         })
-        
+    }
+    
+    private func drawBackgroundOfTappedLinkCharacters(_ context: CGContext) {
         tappedLinkColor.setFill()
         rectangles(with: tappedLinkRange).forEach({
             context.fill($0)
         })
+    }
+    
+    private func drawBoundingBoxesOfAllCharacters(_ context: CGContext) {
+        CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
+            let lineRect = lineInfo.getRect(contentSize: contentSize)
+            let indices = lineInfo.range.arangeIncludingEndIndex.map({$0})
+            zip(indices, indices.dropFirst()).forEach({
+                let leftOffset = CTLineGetOffsetForStringIndex(lineInfo.line, $0.0, nil)
+                let rightOffset = CTLineGetOffsetForStringIndex(lineInfo.line, $0.1, nil)
+                let r = CGRect(x: lineInfo.origin.x + leftOffset, y: lineRect.minY, width: rightOffset - leftOffset, height: lineRect.size.height)
+                context.stroke(r)
+            })
+        })
+    }
+    
+    // MARK: -
+    
+    private func testTappedLinkRange() {
+        if tappedLinkRange != NSRange.notFound {
+            for i in tappedLinkRange.location..<(tappedLinkRange.location + tappedLinkRange.length) {
+                var effectiveRange = NSRange.notFound
+                let attribute = attributedString.attributes(at: i, effectiveRange: &effectiveRange)
+                guard let link = attribute[NSLinkAttributeName] else { continue }
+                print(link)
+                break
+            }
+            tappedLinkRange = NSRange.notFound
+        }
     }
     
     // MARK: -
@@ -277,16 +318,6 @@ public class UZTextView: UIView {
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset)
-        
-        do {
-            let index = try characterIndex(at: point)
-            let string = self.attributedString.string
-            let si = string.index(string.startIndex, offsetBy: index + 0)
-            let ei = string.index(string.startIndex, offsetBy: index + 1)
-            print(string.substring(with: si..<ei))
-        } catch {
-            print("\(error)")
-        }
         updateTappedLinkRange(at: point)
         setNeedsDisplay()
     }
@@ -302,31 +333,19 @@ public class UZTextView: UIView {
     }
     
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if tappedLinkRange != NSRange.notFound {
-            for i in tappedLinkRange.location..<(tappedLinkRange.location + tappedLinkRange.length) {
-                var effectiveRange = NSRange.notFound
-                let attribute = attributedString.attributes(at: i, effectiveRange: &effectiveRange)
-                guard let link = attribute[NSLinkAttributeName] else { continue }
-                print(link)
-                break
-            }
-            tappedLinkRange = NSRange.notFound
-        }
+        testTappedLinkRange()
         setNeedsDisplay()
     }
     
     // MARK: -
     
     private func updateTappedLinkRange(at point: CGPoint) {
-        do {
-            let index = try characterIndex(at: point)
-            var effectiveRange = NSRange.notFound
-            let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
-            guard let _ = attribute[NSLinkAttributeName] else { tappedLinkRange = NSRange.notFound; return }
-            tappedLinkRange = effectiveRange
-        } catch {
-            tappedLinkRange = NSRange.notFound
-        }
+        let index = characterIndex(at: point)
+        guard index != NSNotFound else { tappedLinkRange = NSRange.notFound; return }
+        var effectiveRange = NSRange.notFound
+        let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
+        guard let _ = attribute[NSLinkAttributeName] else { tappedLinkRange = NSRange.notFound; return }
+        tappedLinkRange = effectiveRange
     }
     
     private func updateLayout() {
@@ -339,19 +358,6 @@ public class UZTextView: UIView {
         let path = CGPath(rect: contentRect, transform: nil)
         ctframe = CTFramesetterCreateFrame(frameSetter, CFRange.zero, path, nil)
         ctframeSetter = frameSetter
-    }
-    
-    private func drawTextBox(_ context: CGContext) {
-        CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
-            let lineRect = lineInfo.getRect(contentSize: contentSize)
-            let indices = lineInfo.range.arangeIncludingEndIndex.map({$0})
-            zip(indices, indices.dropFirst()).forEach({
-                let leftOffset = CTLineGetOffsetForStringIndex(lineInfo.line, $0.0, nil)
-                let rightOffset = CTLineGetOffsetForStringIndex(lineInfo.line, $0.1, nil)
-                let r = CGRect(x: lineInfo.origin.x + leftOffset, y: lineRect.minY, width: rightOffset - leftOffset, height: lineRect.size.height)
-                context.stroke(r)
-            })
-        })
     }
     
     func didChangeLongPressGesture(_ gestureRecognizer: UILongPressGestureRecognizer) {
@@ -388,27 +394,25 @@ public class UZTextView: UIView {
     }
     
     func rangeOfWord(at point: CGPoint) -> NSRange {
-        do {
-            let index = try characterIndex(at: point)
+        let index = characterIndex(at: point)
+        guard index != NSNotFound else { return NSRange.notFound }
+        
+        let string = self.attributedString.string as CFString
+        let range: CFRange = string.fullRange
+        guard let tokenizer = CFStringTokenizerCreate(kCFAllocatorDefault, string, range, kCFStringTokenizerUnitWordBoundary, nil)
+            else { return NSRange.notFound }
+        
+        var tokenType = CFStringTokenizerGoToTokenAtIndex(tokenizer, index)
+        repeat {
+            let range = CFStringTokenizerGetCurrentTokenRange(tokenizer)
             
-            let string = self.attributedString.string as CFString
-            let range: CFRange = string.fullRange
-            guard let tokenizer = CFStringTokenizerCreate(kCFAllocatorDefault, string, range, kCFStringTokenizerUnitWordBoundary, nil)
-                else { return NSRange.notFound }
+            if range.arange ~= index {
+                return NSRange(location: range.location, length: range.length)
+            }
             
-            var tokenType = CFStringTokenizerGoToTokenAtIndex(tokenizer, index)
-            repeat {
-                let range = CFStringTokenizerGetCurrentTokenRange(tokenizer)
-                
-                if range.arange ~= index {
-                    return NSRange(location: range.location, length: range.length)
-                }
-                
-                tokenType = CFStringTokenizerAdvanceToNextToken(tokenizer)
-            } while tokenType.rawValue != 0
-        } catch {
-            return NSRange.notFound
-        }
+            tokenType = CFStringTokenizerAdvanceToNextToken(tokenizer)
+        } while tokenType.rawValue != 0
+        
         return NSRange.notFound
     }
   
@@ -419,11 +423,7 @@ public class UZTextView: UIView {
         longPressGestureRecognizer = gestureRecognizer
     }
     
-    enum UZTextViewCharacterIndex: Error {
-        case notFound
-    }
-    
-    private func characterIndex(at point: CGPoint) throws -> Int {
+    private func characterIndex(at point: CGPoint) -> Int {
         enum CharacterIndex: Error {
             case find(index: Int)
         }
@@ -441,13 +441,12 @@ public class UZTextView: UIView {
                         throw CharacterIndex.find(index: $0.0)
                     }
                 })
-                throw UZTextViewCharacterIndex.notFound
             })
         } catch CharacterIndex.find(let index) {
             return index
         } catch {
-            throw UZTextViewCharacterIndex.notFound
+            return NSNotFound
         }
-        throw UZTextViewCharacterIndex.notFound
+        return NSNotFound
     }
 }

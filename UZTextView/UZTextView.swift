@@ -193,9 +193,9 @@ public class UZTextView: UIView {
     var ctframe: CTFrame!
     /// The CTFramesetter opaque type is used to generate text frames. That is, CTFramesetter is an object factory for CTFrame objects.
     var ctframeSetter: CTFramesetter!
-    /// CGSize structure which contains the size of string which will be rendered in the view.
+    /// CGSize structure which contains the size of string which will be rendered in the view. This size and ```contentInset``` is the size of the view.
     var contentSize: CGSize = CGSize.zero
-    /// The distance that the string rendering area is inset from the view.
+    /// The distance that the string rendering area is inset from the view. This inset and ```contentSize``` is the size of the view.
     var contentInset: UIEdgeInsets = UIEdgeInsets.zero
     
     /// UIGestureRecognizer which detects long press in order to parse words from the string of the view.
@@ -389,6 +389,10 @@ public class UZTextView: UIView {
         tappedLinkRange = effectiveRange
     }
     
+    /**
+     Update text layout in the view.
+     This method must be called after resizing the view, updating the string and so on.
+     */
     private func updateLayout() {
         let horizontalMargin = contentInset.left + contentInset.right
         contentSize = CGSize(width: self.frame.size.width - horizontalMargin, height: CGFloat.greatestFiniteMagnitude)
@@ -401,6 +405,20 @@ public class UZTextView: UIView {
         ctframeSetter = frameSetter
     }
     
+    /**
+     Setup and attach gesture recognizer to the view.
+     */
+    private func setupGestureRecognizer() {
+        let gestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(UZTextView.didChangeLongPressGesture(_:)))
+        gestureRecognizer.minimumPressDuration = 0.5
+        self.addGestureRecognizer(gestureRecognizer)
+        longPressGestureRecognizer = gestureRecognizer
+    }
+    
+    /**
+     Dispatch a long press gesture event.
+     - parameter gestureRecognizer: An UIGestureRecognizer object.
+     */
     func didChangeLongPressGesture(_ gestureRecognizer: UILongPressGestureRecognizer) {
         switch gestureRecognizer.state {
         case .began:
@@ -414,26 +432,33 @@ public class UZTextView: UIView {
         }
     }
     
+    /**
+     Returns CGRect array which contains rectangles around specified characters. If there are no characaters, returns an empty array.
+     - parameter range: Index range which specifies the characters.
+     - returns: CGRect array which contains rectangles around specified characters. A CGRect object is generated each line if the characters extend more than two lines.
+     */
     private func rectangles(with range: NSRange) -> [CGRect] {
         guard range.length > 0 else { return [] }
         return CTFrameGetLineInfo(ctframe)
         .flatMap({
             let lineRect = $0.getRect(contentSize: contentSize)
-            let top = lineRect.minY
-            let height = lineRect.size.height
-            
             let intersect = NSIntersectionRange($0.range, range)
-            
             if intersect.length > 0 {
                 let leftOffset = CTLineGetOffsetForStringIndex($0.line, intersect.location, nil)
                 let rightOffset = CTLineGetOffsetForStringIndex($0.line, NSMaxRange(intersect), nil)
-                return CGRect(x: $0.origin.x + leftOffset, y: top, width: rightOffset - leftOffset, height: height)
+                return CGRect(x: $0.origin.x + leftOffset, y: lineRect.minY, width: rightOffset - leftOffset, height: lineRect.size.height)
             } else {
                 return nil
             }
         })
     }
     
+    /**
+     Returns A NSRange structure that contains the range over the word user tapped, or if the function fails for any reason, an not found range.
+     The word is detected using CFStringTokenizer.
+     - parameter point: A CGPoint structure which contains a location at which user tapped.
+     - returns: A NSRange structure that contains the range over the word user tapped, or if the function fails for any reason, an not found range.
+     */
     func rangeOfWord(at point: CGPoint) -> NSRange {
         let index = characterIndex(at: point)
         guard index != NSNotFound else { return NSRange.notFound }
@@ -457,13 +482,11 @@ public class UZTextView: UIView {
         return NSRange.notFound
     }
   
-    private func setupGestureRecognizer() {
-        let gestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(UZTextView.didChangeLongPressGesture(_:)))
-        gestureRecognizer.minimumPressDuration = 0.5
-        self.addGestureRecognizer(gestureRecognizer)
-        longPressGestureRecognizer = gestureRecognizer
-    }
-    
+    /**
+     Returns index of the character user tapped in the view.
+     - parameter point: A CGPoint structure which contains a location at which user tapped.
+     - returns: Index of the character user tapped, or if the function fails for any reason, NSNotFound.
+     */
     private func characterIndex(at point: CGPoint) -> Int {
         enum CharacterIndex: Error {
             case find(index: Int)

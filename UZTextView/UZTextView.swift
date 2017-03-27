@@ -205,10 +205,34 @@ fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
     })
 }
 
+/**
+ The methods of this protocol allow the delegate to manage selecting string, tapping link in the view and long tapping it in the view.
+ */
 public protocol UZTextViewDelegate: class {
-    func textView(_ textView: UZTextView, didClickLinkAttribute: Any)
-    func textView(_ textView: UZTextView, didLongTapLinkAttribute: Any)
+    /**
+     To be written.
+     - parameter textView:
+     - parameter attribute:
+     */
+    func textView(_ textView: UZTextView, didClickLinkAttribute attribute: Any)
+    
+    /**
+     To be written.
+     - parameter textView:
+     - parameter attribute:
+     */
+    func textView(_ textView: UZTextView, didLongTapLinkAttribute attribute: Any)
+    
+    /**
+     To be written.
+     - parameter textView:
+     */
     func selectingStringBegun(_ textView: UZTextView)
+    
+    /**
+     To be written.
+     - parameter textView:
+     */
     func selectingStringEnded(_ textView: UZTextView)
 }
 
@@ -237,6 +261,7 @@ public class UZTextView: UIView {
     /// Delegate of UZTextViewDelegate protocol
     public weak var delegate: UZTextViewDelegate?
     
+    /// Cursor status
     private var cursorStatus = CursorStatus.none
 
     /// The styled text displayed by the view
@@ -318,6 +343,10 @@ public class UZTextView: UIView {
         case movingRightCursor
     }
     
+    /**
+     Control cursor to select string in the view.
+     - parameter point: CGPoint structure which contains the location at which user is tapping.
+     */
     private func manageCursorWhenTouchesBegan(at point: CGPoint) {
         let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
         let rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
@@ -328,6 +357,10 @@ public class UZTextView: UIView {
         }
     }
     
+    /**
+     Control cursor to select string in the view.
+     - parameter point: CGPoint structure which contains the location at which user is dragging.
+     */
     private func manageCursorWhenTouchesMoved(at point: CGPoint) {
         switch cursorStatus {
         case .movingLeftCursor:
@@ -352,30 +385,46 @@ public class UZTextView: UIView {
         }
     }
     
+    /**
+     Control cursor to select string in the view.
+     - parameter point: CGPoint structure which contains the location at which user's tapping event is cancelled.
+     */
     private func manageCursorWhenTouchesCancelled(at point: CGPoint) {
         cursorStatus = .none
     }
     
+    /**
+     Control cursor to select string in the view.
+     - parameter point: CGPoint structure which contains the location at which user's tapping event is ended.
+     */
     private func manageCursorWhenTouchesEnded(at point: CGPoint) {
         if selectedRange.length > 0 {
             let index = characterIndex(at: point)
             if selectedRange.arange ~= index {
-                let tapped = CGRect(x: point.x / scale - contentInset.left, y: point.y / scale - contentInset.top, width: 1, height: 1)
-                let targetRect = rectangles(with: selectedRange)
-                    .map({
-                        CGRect(x: $0.origin.x / scale - contentInset.left, y: $0.origin.y / scale - contentInset.top, width: $0.size.width / scale, height: $0.size.height / scale)
-                    })
-                    .reduce(tapped, { (result, rect) -> CGRect in
-                        return rect.union(result)
-                    })
-                self.becomeFirstResponder()
-                UIMenuController.shared.setTargetRect(targetRect, in: self)
-                UIMenuController.shared.setMenuVisible(true, animated: true)
+                showUIMenuForSelectedString(at: point)
             } else {
                 selectedRange = NSRange.notFound
             }
         }
         cursorStatus = .none
+    }
+    
+    /**
+     Show UIMenuController which handles selected string.
+     - parameter point: CGPoint structure which contains the location at which user tapped.
+     */
+    private func showUIMenuForSelectedString(at point: CGPoint) {
+        let tapped = CGRect(x: point.x / scale - contentInset.left, y: point.y / scale - contentInset.top, width: 1, height: 1)
+        let targetRect = rectangles(with: selectedRange)
+            .map({
+                CGRect(x: $0.origin.x / scale - contentInset.left, y: $0.origin.y / scale - contentInset.top, width: $0.size.width / scale, height: $0.size.height / scale)
+            })
+            .reduce(tapped, { (result, rect) -> CGRect in
+                return rect.union(result)
+            })
+        self.becomeFirstResponder()
+        UIMenuController.shared.setTargetRect(targetRect, in: self)
+        UIMenuController.shared.setMenuVisible(true, animated: true)
     }
     
     // MARK: -
@@ -433,8 +482,6 @@ public class UZTextView: UIView {
         guard touch.location(in: self) != touch.previousLocation(in: self) else { return }
         
         manageCursorWhenTouchesMoved(at: point)
-
-        
         tappedLinkRange = NSRange.notFound
         setNeedsDisplay()
     }
@@ -456,7 +503,7 @@ public class UZTextView: UIView {
         if let delegate = delegate {
             delegate.selectingStringEnded(self)
         }
-        testTappedLinkRange()
+        testTappedLinkRange()   /// this method must be called before calling manageCursorWhenTouchesEnded
         manageCursorWhenTouchesEnded(at: point)
         setNeedsDisplay()
     }

@@ -265,6 +265,7 @@ public class UZTextView: UIView {
     private var cursorStatus = CursorStatus.none
     
     private let leftCursor = UZCursorView(with: .up)
+    private let rightCursor = UZCursorView(with: .down)
 
     /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {
@@ -307,6 +308,9 @@ public class UZTextView: UIView {
         leftCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
         self.addSubview(leftCursor)
         leftCursor.isHidden = true
+        rightCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+        self.addSubview(rightCursor)
+        rightCursor.isHidden = true
     }
     
     required public init?(coder aDecoder: NSCoder) {
@@ -315,6 +319,9 @@ public class UZTextView: UIView {
         leftCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
         self.addSubview(leftCursor)
         leftCursor.isHidden = true
+        rightCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+        self.addSubview(rightCursor)
+        rightCursor.isHidden = true
     }
     
     public override func layoutSubviews() {
@@ -339,8 +346,8 @@ public class UZTextView: UIView {
         drawStrikeThroughLine(context)
         
         // for debug
-        drawBoundingBoxesOfAllCharacters(context)
-        drawCursorHitRects(context)
+//        drawBoundingBoxesOfAllCharacters(context)
+//        drawCursorHitRects(context)
     }
     
     // MARK: -
@@ -611,18 +618,28 @@ public class UZTextView: UIView {
         
     private func updateCursors() {
         if selectedRange.length > 0 {
-            let rects = rectangles(with: NSRange(location: selectedRange.location, length: 1))
-            guard var rect = rects.first else { return }
-//            let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
-            rect.origin.x -= 10
-            rect.origin.y -= 10
-            rect.size.width = 40
-            rect.size.height += 10
-            leftCursor.frame = rect
-//            leftCursor.updateLocation(in: rect)
-            leftCursor.isHidden = false
+            do {
+                let rects = rectangles(with: NSRange(location: selectedRange.location, length: 1))
+                guard var rect = rects.first else { return }
+                rect.origin.x -= 5
+                rect.origin.y -= 15
+                rect.size.width = 10
+                rect.size.height += 15
+                leftCursor.frame = rect
+                leftCursor.isHidden = false
+            }
+            do {
+                let rects = rectangles(with: NSRange(location: selectedRange.location + selectedRange.length - 1, length: 1))
+                guard var rect = rects.first else { return }
+                rect.origin.x = rect.origin.x + rect.size.width - 5
+                rect.size.width = 10
+                rect.size.height += 15
+                rightCursor.frame = rect
+                rightCursor.isHidden = false
+            }
         } else {
             leftCursor.isHidden = true
+            rightCursor.isHidden = true
         }
     }
     

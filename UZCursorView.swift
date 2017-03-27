@@ -38,8 +38,16 @@ internal class UZCursorView: UIView {
     private func cursorRenderingInfo() -> (CGPoint, CGRect) {
         switch direction {
         case .up:
-            let point = CGPoint(x: UZCursorView.horizontalMargin1 - 1, y: UZCursorView.verticalMargin - UZCursorView.poleMargin)
-            let rect = CGRect(x: point.x - UZCursorView.poleWidth / 2, y: point.y, width: UZCursorView.poleWidth, height: UZCursorView.verticalMargin * 2 + UZCursorView.poleMargin)
+            let point = CGPoint(
+                x: UZCursorView.horizontalMargin1 - 1,
+                y: UZCursorView.verticalMargin - UZCursorView.poleMargin
+            )
+            let rect = CGRect(
+                x: point.x - UZCursorView.poleWidth / 2,
+                y: point.y,
+                width: UZCursorView.poleWidth,
+                height: self.frame.size.height - UZCursorView.verticalMargin * 2 + UZCursorView.poleMargin
+            )
             return (point, rect)
         case .down:
             let point = CGPoint(x: UZCursorView.horizontalMargin2, y: self.frame.size.height - (UZCursorView.verticalMargin - UZCursorView.poleMargin))
@@ -79,19 +87,39 @@ internal class UZCursorView: UIView {
 //        }
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        setNeedsDisplay()
+    }
+    
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         
-        UIColor.blue.setStroke()
-        context.stroke(rect.insetBy(dx: 1, dy: 1))
+//        UIColor.blue.setStroke()
+//        context.stroke(rect.insetBy(dx: 1, dy: 1))
+    
+        let axisLength = floor(rect.size.height * 0.7)
+        let radius = floor((rect.size.height - axisLength) * 0.5)
+    
+        if direction == .up {
+            let poleRect = CGRect(x: rect.midX - 1, y: rect.size.height - axisLength - 1, width: 2, height: axisLength + 1)
+            let point = CGPoint(x: rect.midX, y: radius + 1)
+            context.addArc(center: point, radius: radius - 1, startAngle: 0, endAngle: 2.0 * CGFloat.pi, clockwise: false)
+            context.closePath()
+            
+            self.tintColor.withAlphaComponent(1).setFill()
+            context.fillPath()
+            context.fill(poleRect)
+        } else {
+            let poleRect = CGRect(x: rect.midX - 1, y: 0, width: 2, height: axisLength + 1)
+            let point = CGPoint(x: rect.midX, y: self.frame.size.height - radius - 1)
+            context.addArc(center: point, radius: radius - 1, startAngle: 0, endAngle: 2.0 * CGFloat.pi, clockwise: false)
+            context.closePath()
+            
+            self.tintColor.withAlphaComponent(1).setFill()
+            context.fillPath()
+            context.fill(poleRect)
+        }
         
-        let (point, rect) = cursorRenderingInfo()
-        
-        context.addArc(center: point, radius: UZCursorView.ballRadius, startAngle: 0, endAngle: 2.0 * CGFloat.pi, clockwise: false)
-        context.closePath()
-        
-        self.tintColor.withAlphaComponent(1).setFill()
-        context.fillPath()
-        context.fill(rect)
     }
 }

@@ -620,21 +620,14 @@ public class UZTextView: UIView {
         if selectedRange.length > 0 {
             do {
                 let rects = rectangles(with: NSRange(location: selectedRange.location, length: 1))
-                guard var rect = rects.first else { return }
-                rect.origin.x -= 5
-                rect.origin.y -= 15
-                rect.size.width = 10
-                rect.size.height += 15
-                leftCursor.frame = rect
+                guard let rect = rects.first else { return }
+                leftCursor.updateLocation(in: rect)
                 leftCursor.isHidden = false
             }
             do {
                 let rects = rectangles(with: NSRange(location: selectedRange.location + selectedRange.length - 1, length: 1))
-                guard var rect = rects.first else { return }
-                rect.origin.x = rect.origin.x + rect.size.width - 5
-                rect.size.width = 10
-                rect.size.height += 15
-                rightCursor.frame = rect
+                guard let rect = rects.first else { return }
+                rightCursor.updateLocation(in: rect)
                 rightCursor.isHidden = false
             }
         } else {

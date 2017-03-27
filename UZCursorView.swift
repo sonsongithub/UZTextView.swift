@@ -8,19 +8,20 @@
 
 import UIKit
 
-internal enum UZCursorViewDirection {
-    case up
-    case down
-}
-
 /**
  Cursor which is showed while user is selecting any string in the view.
  */
 internal class UZCursorView: UIView {
     /// Cursor's direction.
-    let direction: UZCursorViewDirection
+    private enum UZCursorViewDirection {
+        case up
+        case down
+    }
     
-    init(with aDirection: UZCursorViewDirection) {
+    /// Cursor's direction.
+    private let direction: UZCursorViewDirection
+    
+    private init(with aDirection: UZCursorViewDirection) {
         direction = aDirection
         super.init(frame: CGRect.zero)
         backgroundColor = UIColor.clear
@@ -29,14 +30,15 @@ internal class UZCursorView: UIView {
     required init?(coder aDecoder: NSCoder) {
         direction = .down
         super.init(coder: aDecoder)
+        backgroundColor = UIColor.clear
     }
     
     /// Static width of this view.
-    static var width = CGFloat(10)
+    private static var width = CGFloat(10)
     /// Extended height of pole of the cursor.
-    static var extendHeight = CGFloat(15)
+    private static var extendHeight = CGFloat(15)
     /// Ratio of the radius to the height of the view.
-    static var radiusRatio = CGFloat(0.3)
+    private static var radiusRatio = CGFloat(0.3)
     
     /**
      Calculate center of the circle, rectangle of the axis and radius of the circle in the view.
@@ -44,8 +46,8 @@ internal class UZCursorView: UIView {
      - returns: Tuple which contains center of the circle, rectangle of the axis and radius of the circle in the view.
      */
     private func cursorRenderingInfo(_ rect: CGRect) -> (CGPoint, CGRect, CGFloat) {
-        let axisLength = floor(rect.size.height * (1.0 - UZCursorView.radiusRatio))
-        let radius = floor((rect.size.height - axisLength) * 0.5)
+        let axisLength = rect.size.height - UZCursorView.width
+        let radius = UZCursorView.width / 2
         switch direction {
         case .up:
             let poleRect = CGRect(x: rect.midX - 1, y: rect.size.height - axisLength - 1, width: 2, height: axisLength + 1)
@@ -56,6 +58,36 @@ internal class UZCursorView: UIView {
             let point = CGPoint(x: rect.midX, y: self.frame.size.height - radius - 1)
             return (point, poleRect, radius)
         }
+    }
+    
+    // MARK: -
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        setNeedsDisplay()
+    }
+    
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        
+        let (point, poleRect, radius) = cursorRenderingInfo(rect)
+        context.addArc(center: point, radius: radius - 1, startAngle: 0, endAngle: 2.0 * CGFloat.pi, clockwise: false)
+        context.closePath()
+        self.tintColor.withAlphaComponent(1).setFill()
+        context.fillPath()
+        context.fill(poleRect)
+    }
+    
+    // MARK: -
+    
+    /// Create left cursor
+    internal static func createLeftCursor() -> UZCursorView {
+        return UZCursorView(with: .up)
+    }
+    
+    /// Create right cursor
+    internal static func createRightCursor() -> UZCursorView {
+        return UZCursorView(with: .down)
     }
     
     /**
@@ -78,21 +110,5 @@ internal class UZCursorView: UIView {
             rect.size.height += UZCursorView.extendHeight
             self.frame = rect
         }
-    }
-    
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        setNeedsDisplay()
-    }
-    
-    override func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext() else { return }
-        
-        let (point, poleRect, radius) = cursorRenderingInfo(rect)
-        context.addArc(center: point, radius: radius - 1, startAngle: 0, endAngle: 2.0 * CGFloat.pi, clockwise: false)
-        context.closePath()
-        self.tintColor.withAlphaComponent(1).setFill()
-        context.fillPath()
-        context.fill(poleRect)
     }
 }

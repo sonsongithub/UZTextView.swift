@@ -9,12 +9,30 @@
 import UIKit
 import UZTextView
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UZTextViewDelegate {
     @IBOutlet var textView1: UZTextView!
     @IBOutlet var textView2: UZTextView!
     @IBOutlet var textView3: UZTextView!
     @IBOutlet var textView4: UZTextView!
 
+    func textView(_ textView: UZTextView, didClickLinkAttribute attribute: Any) {
+        print(#function)
+        print(attribute)
+    }
+    
+    func textView(_ textView: UZTextView, didLongTapLinkAttribute attribute: Any) {
+        print(#function)
+        print(attribute)
+    }
+    
+    func selectingStringBegun(_ textView: UZTextView) {
+        print(#function)
+    }
+    
+    func selectingStringEnded(_ textView: UZTextView) {
+        print(#function)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -34,6 +52,8 @@ class ViewController: UIViewController {
                               range: NSRange(location: 0, length: attr.length))
             textView1.attributedString = attr
             textView2.attributedString = attr
+            textView1.delegate = self
+            textView2.delegate = self
             
         } catch {
             print(error)

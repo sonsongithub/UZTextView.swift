@@ -188,8 +188,11 @@ fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
     })
 }
 
-enum UZTextViewError: Error, LocalizedError {
-    case canNotGetFrame
+public protocol UZTextViewDelegate: class {
+    func textView(_ textView: UZTextView, didClickLinkAttribute: Any)
+    func textView(_ textView: UZTextView, didLongTapLinkAttribute: Any)
+    func selectingStringBegun(_ textView: UZTextView)
+    func selectingStringEnded(_ textView: UZTextView)
 }
 
 public class UZTextView: UIView {
@@ -214,6 +217,11 @@ public class UZTextView: UIView {
     var highlightedColor: UIColor = UIColor.yellow.withAlphaComponent(0.6)
     var tappedLinkColor: UIColor = UIColor.lightGray.withAlphaComponent(0.6)
     
+    /// Delegate of UZTextViewDelegate protocol
+    public weak var delegate: UZTextViewDelegate?
+    
+    private var cursorStatus = CursorStatus.none
+
     /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {
         didSet {
@@ -280,6 +288,65 @@ public class UZTextView: UIView {
         drawBackgroundOfSelectedCharacters(context)
         drawBackgroundOfTappedLinkCharacters(context)
         drawStrikeThroughLine(context)
+        drawCursorHitRects(context)
+    }
+    
+    // MARK: -
+    
+    private enum CursorStatus {
+        case none
+        case movingLeftCursor
+        case movingRightCursor
+    }
+    
+    private func manageCursorWhenTouchesBegan(at point: CGPoint) {
+        let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
+        let rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
+        if leftCursorRect.contains(point) {
+            cursorStatus = .movingLeftCursor
+        } else if rightCursorRect.contains(point) {
+            cursorStatus = .movingRightCursor
+        }
+    }
+    
+    private func manageCursorWhenTouchesMoved(at point: CGPoint) {
+        switch cursorStatus {
+        case .movingLeftCursor:
+            let index = characterIndex(at: point)
+            if index != NSNotFound {
+                let length = selectedRange.length + selectedRange.location - index
+                if length > 0 {
+                    selectedRange.location = index
+                    selectedRange.length = length
+                }
+            }
+        case .movingRightCursor:
+            let index = characterIndex(at: point)
+            if index != NSNotFound {
+                let length = index - selectedRange.location + 1
+                if length > 0 {
+                    selectedRange.length = length
+                }
+            }
+        default:
+            do {}
+        }
+    }
+    
+    private func manageCursorWhenTouchesCancelled(at point: CGPoint) {
+        cursorStatus = .none
+    }
+    
+    private func manageCursorWhenTouchesEnded(at point: CGPoint) {
+        if selectedRange.length > 0 {
+            let index = characterIndex(at: point)
+            if selectedRange.arange ~= index {
+                print("show")
+            } else {
+                selectedRange = NSRange.notFound
+            }
+        }
+        cursorStatus = .none
     }
     
     // MARK: -
@@ -287,26 +354,48 @@ public class UZTextView: UIView {
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
+        
+        if let delegate = delegate {
+            delegate.selectingStringBegun(self)
+        }
+        
+        manageCursorWhenTouchesBegan(at: point)
         updateTappedLinkRange(at: point)
         setNeedsDisplay()
     }
     
     public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
+        let point = touch.location(in: self, inset: contentInset, scale: scale)
         
         /// ignore z movement
-        guard touch.location(in: self) == touch.previousLocation(in: self) else { return }
+        guard touch.location(in: self) != touch.previousLocation(in: self) else { return }
+        
+        manageCursorWhenTouchesMoved(at: point)
+
         
         tappedLinkRange = NSRange.notFound
         setNeedsDisplay()
     }
     
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let point = touch.location(in: self, inset: contentInset, scale: scale)
+        if let delegate = delegate {
+            delegate.selectingStringEnded(self)
+        }
+        manageCursorWhenTouchesCancelled(at: point)
         tappedLinkRange = NSRange.notFound
         setNeedsDisplay()
     }
     
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let point = touch.location(in: self, inset: contentInset, scale: scale)
+        if let delegate = delegate {
+            delegate.selectingStringEnded(self)
+        }
+        manageCursorWhenTouchesEnded(at: point)
         testTappedLinkRange()
         setNeedsDisplay()
     }
@@ -349,6 +438,25 @@ public class UZTextView: UIView {
     }
     
     /**
+     Draw the strike through lines over the specified characters.
+     - parameter context: The current graphics context.
+     */
+    private func drawStrikeThroughLine(_ context: CGContext) {
+        attributedString.enumerateAttribute(NSStrikethroughStyleAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, stop) in
+            guard let width = value as? CGFloat else { return }
+            rectangles(with: range).forEach({
+                context.setLineWidth(width)
+                context.move(to: CGPoint(x: $0.minX, y: $0.midY))
+                context.addLine(to: CGPoint(x: $0.maxX, y: $0.midY))
+                context.drawPath(using: .stroke)
+            })
+        }
+    }
+    
+    // MARK: -
+    
+    /**
+     For debugging.
      Draw the background rectangles behind the selected characters.
      - parameter context: The current graphics context.
      */
@@ -366,19 +474,16 @@ public class UZTextView: UIView {
     }
     
     /**
-     Draw the strike through lines over the specified characters.
+     For debugging.
+     Draw the rect where user can tap in order to dragging the selecting range.
      - parameter context: The current graphics context.
      */
-    private func drawStrikeThroughLine(_ context: CGContext) {
-        attributedString.enumerateAttribute(NSStrikethroughStyleAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, stop) in
-            guard let width = value as? CGFloat else { return }
-            rectangles(with: range).forEach({
-                context.setLineWidth(width)
-                context.move(to: CGPoint(x: $0.minX, y: $0.midY))
-                context.addLine(to: CGPoint(x: $0.maxX, y: $0.midY))
-                context.drawPath(using: .stroke)
-            })
-        }
+    private func drawCursorHitRects(_ context: CGContext) {
+        UIColor.black.withAlphaComponent(0.5).setFill()
+        let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
+        let rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
+        context.fill(leftCursorRect)
+        context.fill(rightCursorRect)
     }
 
     // MARK: -
@@ -391,8 +496,10 @@ public class UZTextView: UIView {
             for i in tappedLinkRange.arange {
                 var effectiveRange = NSRange.notFound
                 let attribute = attributedString.attributes(at: i, effectiveRange: &effectiveRange)
-                guard let link = attribute[NSLinkAttributeName] else { continue }
-                print(link)
+                guard let _ = attribute[NSLinkAttributeName] else { continue }
+                if let delegate = delegate {
+                    delegate.textView(self, didClickLinkAttribute: attribute)
+                }
                 break
             }
             tappedLinkRange = NSRange.notFound
@@ -459,6 +566,17 @@ public class UZTextView: UIView {
         case .changed:
             selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset, scale: scale))
             self.setNeedsDisplay()
+        case .ended:
+            let point = gestureRecognizer.location(in: self, inset: contentInset, scale: scale)
+            let index = characterIndex(at: point)
+            guard index != NSNotFound else { tappedLinkRange = NSRange.notFound; return }
+            var effectiveRange = NSRange.notFound
+            let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
+            if let _ = attribute[NSLinkAttributeName] {
+                if let delegate = delegate {
+                    delegate.textView(self, didLongTapLinkAttribute: attribute)
+                }
+            }
         default:
             do {}
         }
@@ -512,6 +630,43 @@ public class UZTextView: UIView {
         } while tokenType.rawValue != 0
         
         return NSRange.notFound
+    }
+    
+    /// Curosr position
+    private enum CursorEdge {
+        case left
+        case right
+    }
+    
+    /**
+     Get rect of cursors.
+     - parameter index: Index of character user is selecting.
+     - parameter side: Position of cursor. This value must be .left if the index is the start index of a selected range, or be .right then other case.
+     */
+    private func rectForCursor(at index: Int, side: CursorEdge) -> CGRect {
+        let rects = rectangles(with: NSRange(location: index, length: 1))
+        
+        guard var rect = rects.first else { return CGRect.zero }
+        
+        switch side {
+        case .left:
+            rect.size.width = 1
+            rect = rect.insetBy(dx: -5, dy: 0)
+        case .right:
+            rect.origin.x = rect.origin.x + rect.size.width - 1
+            rect.size.width = 1
+            rect = rect.insetBy(dx: -5, dy: 0)
+        }
+        
+        /// convert to view's coordinate
+        /// adjust left or right edge
+        if rect.origin.x / scale + contentInset.left < 0 {
+            rect.origin.x = contentInset.left * scale
+        }
+        if (rect.origin.x + rect.size.width) / scale + contentInset.right > self.frame.size.width {
+            rect.origin.x -= (self.frame.size.width - contentInset.right) * scale - rect.origin.x - rect.size.width
+        }
+        return rect
     }
   
     /**

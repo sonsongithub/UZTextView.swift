@@ -112,6 +112,23 @@ extension UIGestureRecognizer {
         point.y /= scale
         return point
     }
+    
+    fileprivate var stateDescription: String {
+        switch state {
+        case .began:
+            return "began"
+        case .cancelled:
+            return "cancelled"
+        case .changed:
+            return "changed"
+        case .ended:
+            return "ended"
+        case .failed:
+            return "failed"
+        case .possible:
+            return "possible"
+        }
+    }
 }
 
 /**
@@ -284,10 +301,12 @@ public class UZTextView: UIView {
         }
         
         drawAttributedString(context)
-        drawBoundingBoxesOfAllCharacters(context)
         drawBackgroundOfSelectedCharacters(context)
         drawBackgroundOfTappedLinkCharacters(context)
         drawStrikeThroughLine(context)
+        
+        // for debug
+        drawBoundingBoxesOfAllCharacters(context)
         drawCursorHitRects(context)
     }
     
@@ -341,7 +360,17 @@ public class UZTextView: UIView {
         if selectedRange.length > 0 {
             let index = characterIndex(at: point)
             if selectedRange.arange ~= index {
-                print("show")
+                let tapped = CGRect(x: point.x / scale - contentInset.left, y: point.y / scale - contentInset.top, width: 1, height: 1)
+                let targetRect = rectangles(with: selectedRange)
+                    .map({
+                        CGRect(x: $0.origin.x / scale - contentInset.left, y: $0.origin.y / scale - contentInset.top, width: $0.size.width / scale, height: $0.size.height / scale)
+                    })
+                    .reduce(tapped, { (result, rect) -> CGRect in
+                        return rect.union(result)
+                    })
+                self.becomeFirstResponder()
+                UIMenuController.shared.setTargetRect(targetRect, in: self)
+                UIMenuController.shared.setMenuVisible(true, animated: true)
             } else {
                 selectedRange = NSRange.notFound
             }
@@ -350,10 +379,42 @@ public class UZTextView: UIView {
     }
     
     // MARK: -
+   
+    public override func resignFirstResponder() -> Bool {
+        return super.resignFirstResponder()
+    }
+    
+    public override var canBecomeFirstResponder: Bool {
+        return true
+    }
+    
+    public override func copy(_ sender: Any?) {
+        let stringToBeCopied = (self.string as NSString).substring(with: selectedRange)
+        print(stringToBeCopied)
+        UIPasteboard.general.string = stringToBeCopied
+    }
+    
+    public override func selectAll(_ sender: Any?) {
+        selectedRange = NSRange(location: 0, length: self.string.utf16.count)
+        setNeedsDisplay()
+    }
+    
+    public override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+        if action == #selector(UZTextView.copy(_:)) {
+            return true
+        } else if action == #selector(UZTextView.selectAll(_:)) {
+            return true
+        }
+        return false
+    }
+    
+    // MARK: -
     
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
+        
+        UIMenuController.shared.setMenuVisible(false, animated: true)
         
         if let delegate = delegate {
             delegate.selectingStringBegun(self)
@@ -395,8 +456,8 @@ public class UZTextView: UIView {
         if let delegate = delegate {
             delegate.selectingStringEnded(self)
         }
-        manageCursorWhenTouchesEnded(at: point)
         testTappedLinkRange()
+        manageCursorWhenTouchesEnded(at: point)
         setNeedsDisplay()
     }
     
@@ -512,6 +573,7 @@ public class UZTextView: UIView {
     private func updateTappedLinkRange(at point: CGPoint) {
         let index = characterIndex(at: point)
         guard index != NSNotFound else { tappedLinkRange = NSRange.notFound; return }
+        if selectedRange.arange ~= index { return }
         var effectiveRange = NSRange.notFound
         let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
         guard let _ = attribute[NSLinkAttributeName] else { tappedLinkRange = NSRange.notFound; return }
@@ -562,10 +624,8 @@ public class UZTextView: UIView {
         switch gestureRecognizer.state {
         case .began:
             selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset, scale: scale))
-            self.setNeedsDisplay()
         case .changed:
             selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset, scale: scale))
-            self.setNeedsDisplay()
         case .ended:
             let point = gestureRecognizer.location(in: self, inset: contentInset, scale: scale)
             let index = characterIndex(at: point)
@@ -574,12 +634,14 @@ public class UZTextView: UIView {
             let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
             if let _ = attribute[NSLinkAttributeName] {
                 if let delegate = delegate {
+                    selectedRange = effectiveRange
                     delegate.textView(self, didLongTapLinkAttribute: attribute)
                 }
             }
         default:
             do {}
         }
+        self.setNeedsDisplay()
     }
     
     /**

@@ -17,12 +17,16 @@ class ViewController: UIViewController, UZTextViewDelegate {
 
     func textView(_ textView: UZTextView, didClickLinkAttribute attribute: Any) {
         print(#function)
-        print(attribute)
+        if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] {
+            print(link)
+        }
     }
     
     func textView(_ textView: UZTextView, didLongTapLinkAttribute attribute: Any) {
         print(#function)
-        print(attribute)
+        if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] {
+            print(link)
+        }
     }
     
     func selectingStringBegun(_ textView: UZTextView) {

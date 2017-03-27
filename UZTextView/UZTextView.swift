@@ -263,6 +263,8 @@ public class UZTextView: UIView {
     
     /// Cursor status
     private var cursorStatus = CursorStatus.none
+    
+    private let leftCursor = UZCursorView(with: .up)
 
     /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {
@@ -302,11 +304,17 @@ public class UZTextView: UIView {
     override public init(frame: CGRect) {
         super.init(frame: frame)
         setupGestureRecognizer()
+        leftCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+        self.addSubview(leftCursor)
+        leftCursor.isHidden = true
     }
     
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setupGestureRecognizer()
+        leftCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+        self.addSubview(leftCursor)
+        leftCursor.isHidden = true
     }
     
     public override func layoutSubviews() {
@@ -463,6 +471,7 @@ public class UZTextView: UIView {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
         
+        
         UIMenuController.shared.setMenuVisible(false, animated: true)
         
         if let delegate = delegate {
@@ -472,6 +481,7 @@ public class UZTextView: UIView {
         manageCursorWhenTouchesBegan(at: point)
         updateTappedLinkRange(at: point)
         setNeedsDisplay()
+        updateCursors()
     }
     
     public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -484,6 +494,7 @@ public class UZTextView: UIView {
         manageCursorWhenTouchesMoved(at: point)
         tappedLinkRange = NSRange.notFound
         setNeedsDisplay()
+        updateCursors()
     }
     
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -495,6 +506,7 @@ public class UZTextView: UIView {
         manageCursorWhenTouchesCancelled(at: point)
         tappedLinkRange = NSRange.notFound
         setNeedsDisplay()
+        updateCursors()
     }
     
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -506,6 +518,7 @@ public class UZTextView: UIView {
         testTappedLinkRange()   /// this method must be called before calling manageCursorWhenTouchesEnded
         manageCursorWhenTouchesEnded(at: point)
         setNeedsDisplay()
+        updateCursors()
     }
     
     // MARK: -
@@ -595,6 +608,23 @@ public class UZTextView: UIView {
     }
 
     // MARK: -
+        
+    private func updateCursors() {
+        if selectedRange.length > 0 {
+            let rects = rectangles(with: NSRange(location: selectedRange.location, length: 1))
+            guard var rect = rects.first else { return }
+//            let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
+            rect.origin.x -= 10
+            rect.origin.y -= 10
+            rect.size.width = 40
+            rect.size.height += 10
+            leftCursor.frame = rect
+//            leftCursor.updateLocation(in: rect)
+            leftCursor.isHidden = false
+        } else {
+            leftCursor.isHidden = true
+        }
+    }
     
     /**
      Check whether the user tapped a link or did not. If any link is tapped, callback to the delegate it.
@@ -632,6 +662,7 @@ public class UZTextView: UIView {
      This method must be called after resizing the view, updating the string and so on.
      */
     private func updateLayout() {
+        
         if scale == 0 || scale < 0 {
             scale = 1
         }
@@ -688,7 +719,8 @@ public class UZTextView: UIView {
         default:
             do {}
         }
-        self.setNeedsDisplay()
+        setNeedsDisplay()
+        updateCursors()
     }
     
     /**

@@ -9,7 +9,7 @@
 import UIKit
 
 internal class UZLoupe: UIView {
-    static let radius = CGFloat(40)
+    static let radius = CGFloat(60)
     var image = UIImage()
     var textView: UZTextView?
     
@@ -62,8 +62,26 @@ internal class UZLoupe: UIView {
         return keyWindow(from: parent)
     }
     
-    internal func move(to point: CGPoint) {
+    internal func move(to point: CGPoint, visible: Bool) {
         guard let textView = textView else { return }
+        
+        if isHidden == true && visible == true {
+            // show
+            isHidden = false
+            UIView.animate(withDuration: 0.3, animations: {
+                self.alpha = 1
+            })
+        }
+        if isHidden == false && visible == false {
+            // hide
+            UIView.animate(withDuration: 0.3, animations: {
+                self.alpha = 0
+            }, completion: { (success) in
+                self.isHidden = true
+            })
+        }
+        
+//        isHidden = visible
         
 //        guard let targetView = UIApplication.shared.keyWindow?.rootViewController?.view else { return }
         let targetView = keyWindow(from: textView)

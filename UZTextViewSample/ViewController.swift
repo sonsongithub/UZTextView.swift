@@ -30,11 +30,11 @@ class ViewController: UIViewController, UZTextViewDelegate {
     }
     
     func selectingStringBegun(_ textView: UZTextView) {
-        print(#function)
+//        print(#function)
     }
     
     func selectingStringEnded(_ textView: UZTextView) {
-        print(#function)
+//        print(#function)
     }
     
     override func viewDidLoad() {

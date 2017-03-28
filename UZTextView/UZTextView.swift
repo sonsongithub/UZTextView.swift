@@ -368,10 +368,10 @@ public class UZTextView: UIView {
     private func manageCursorWhenTouchesBegan(at point: CGPoint) {
         let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
         let rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
-        if leftCursorRect.contains(point) {
+        if leftCursorRect.insetBy(dx: -5, dy: -5).contains(point) {
             cursorStatus = .movingLeftCursor
             longPressGestureRecognizer?.isEnabled = false
-        } else if rightCursorRect.contains(point) {
+        } else if rightCursorRect.insetBy(dx: -5, dy: -5).contains(point) {
             cursorStatus = .movingRightCursor
             longPressGestureRecognizer?.isEnabled = false
         }
@@ -514,17 +514,29 @@ public class UZTextView: UIView {
     }
     
     public func updateLoupe(touch: UITouch) {
-        loupe.move(to: touch.location(in: self))
-        
         switch cursorStatus {
         case .movingLeftCursor:
-            loupe.isHidden = false
+            loupe.move(to: touch.location(in: self), visible: true)
         case .movingRightCursor:
-            loupe.isHidden = false
+            loupe.move(to: touch.location(in: self), visible: true)
         case .none:
-            loupe.isHidden = true
+            loupe.move(to: touch.location(in: self), visible: false)
         }
-        
+    }
+    
+    public func updateLoupe(gestureRecognizer: UIGestureRecognizer) {
+        switch gestureRecognizer.state {
+        case .began:
+            loupe.move(to: gestureRecognizer.location(in: self), visible: true)
+        case .changed:
+            loupe.move(to: gestureRecognizer.location(in: self), visible: true)
+        case .cancelled:
+            loupe.move(to: gestureRecognizer.location(in: self), visible: false)
+        case .ended:
+            loupe.move(to: gestureRecognizer.location(in: self), visible: false)
+        default:
+            do {}
+        }
     }
     
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -735,23 +747,33 @@ public class UZTextView: UIView {
      - parameter gestureRecognizer: An UIGestureRecognizer object.
      */
     func didChangeLongPressGesture(_ gestureRecognizer: UILongPressGestureRecognizer) {
+        let point = gestureRecognizer.location(in: self, inset: contentInset, scale: scale)
+        
+        print(gestureRecognizer.stateDescription)
+        
         switch gestureRecognizer.state {
         case .began:
-            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset, scale: scale))
-        case .changed:
-            selectedRange = rangeOfWord(at: gestureRecognizer.location(in: self, inset: contentInset, scale: scale))
-        case .ended:
-            let point = gestureRecognizer.location(in: self, inset: contentInset, scale: scale)
             let index = characterIndex(at: point)
-            guard index != NSNotFound else { tappedLinkRange = NSRange.notFound; return }
             var effectiveRange = NSRange.notFound
-            let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
-            if let _ = attribute[NSLinkAttributeName] {
-                if let delegate = delegate {
-                    selectedRange = effectiveRange
-                    delegate.textView(self, didLongTapLinkAttribute: attribute)
+            if index < self.attributedString.string.utf16.count {
+                let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
+                if let link = attribute[NSLinkAttributeName] {
+                    print(link)
+                    if let delegate = delegate {
+                        delegate.textView(self, didLongTapLinkAttribute: attribute)
+                    }
+                    gestureRecognizer.isEnabled = false
+                    gestureRecognizer.isEnabled = true
+                } else {
+                    selectedRange = rangeOfWord(at: point)
+                    updateLoupe(gestureRecognizer: gestureRecognizer)
                 }
             }
+        case .changed:
+            selectedRange = rangeOfWord(at: point)
+            updateLoupe(gestureRecognizer: gestureRecognizer)
+        case .ended:
+            updateLoupe(gestureRecognizer: gestureRecognizer)
         default:
             do {}
         }

@@ -367,8 +367,10 @@ public class UZTextView: UIView {
         let rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
         if leftCursorRect.contains(point) {
             cursorStatus = .movingLeftCursor
+            longPressGestureRecognizer?.isEnabled = false
         } else if rightCursorRect.contains(point) {
             cursorStatus = .movingRightCursor
+            longPressGestureRecognizer?.isEnabled = false
         }
     }
     
@@ -406,6 +408,7 @@ public class UZTextView: UIView {
      */
     private func manageCursorWhenTouchesCancelled(at point: CGPoint) {
         cursorStatus = .none
+        longPressGestureRecognizer?.isEnabled = true
     }
     
     /**
@@ -422,6 +425,7 @@ public class UZTextView: UIView {
             }
         }
         cursorStatus = .none
+        longPressGestureRecognizer?.isEnabled = true
     }
     
     /**
@@ -477,7 +481,6 @@ public class UZTextView: UIView {
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
-        
         
         UIMenuController.shared.setMenuVisible(false, animated: true)
         

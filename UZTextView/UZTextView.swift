@@ -668,6 +668,7 @@ public class UZTextView: UIView {
         let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
         guard let _ = attribute[NSLinkAttributeName] else { tappedLinkRange = NSRange.notFound; return }
         tappedLinkRange = effectiveRange
+        longPressGestureRecognizer?.isEnabled = false
     }
     
     /**

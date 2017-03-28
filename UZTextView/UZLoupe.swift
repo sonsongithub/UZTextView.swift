@@ -8,7 +8,7 @@
 
 import UIKit
 
-internal class UZLoupe: UIView {
+internal class UZLoupe: UIView, CAAnimationDelegate {
     static let radius = CGFloat(60)
     var image = UIImage()
     var textView: UZTextView?
@@ -16,10 +16,12 @@ internal class UZLoupe: UIView {
     internal init() {
         super.init(frame: CGRect(x: 0, y: 0, width: UZLoupe.radius * 2, height: UZLoupe.radius * 2))
         backgroundColor = UIColor.clear
+        isHidden = true
     }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+        isHidden = true
     }
     
     override var center: CGPoint {
@@ -61,29 +63,67 @@ internal class UZLoupe: UIView {
         }
         return keyWindow(from: parent)
     }
+
+    private func show() {
+        guard isHidden == true else { return }
+        isHidden = false
+        
+        let alphaAnimation: CAKeyframeAnimation = {
+            let animation = CAKeyframeAnimation(keyPath: "opacity")
+            animation.values = [0, 0.97, 1]
+            animation.keyTimes = [0, 0.7, 1]
+            return animation
+        }()
+        
+        let scaleAnimation: CAKeyframeAnimation = {
+            let animation = CAKeyframeAnimation(keyPath: "transform.scale")
+            animation.values = [0, 1]
+            animation.keyTimes = [0, 1]
+            return animation
+        }()
+        
+        let tranlateAnimation: CAKeyframeAnimation = {
+            let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
+            animation.values = [(self.frame.size.height * CGFloat(0.5)) as NSNumber, 0]
+            animation.keyTimes = [0, 1]
+            return animation
+        }()
+        
+        let group = CAAnimationGroup()
+        group.animations = [alphaAnimation, scaleAnimation, tranlateAnimation]
+        group.duration = 0.2
+        group.isRemovedOnCompletion = false
+        group.fillMode = kCAFillModeForwards
+        group.delegate = self
+        
+        group.setValue("show", forKey: "name")
+        self.layer.add(group, forKey: "show")
+    }
     
-    internal func move(to point: CGPoint, visible: Bool) {
+    private func hide() {
+        isHidden = true
+    }
+    
+    func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
+        guard let name = anim.value(forKey: "name") as? String else { return }
+        if name == "show" {
+            print("end")
+        }
+    }
+    
+    internal func setVisible(visible: Bool) {
+        if visible {
+            show()
+        } else {
+            hide()
+        }
+    }
+    
+    internal func move(to point: CGPoint) {
         guard let textView = textView else { return }
         
-        if isHidden == true && visible == true {
-            // show
-            isHidden = false
-            UIView.animate(withDuration: 0.3, animations: {
-                self.alpha = 1
-            })
-        }
-        if isHidden == false && visible == false {
-            // hide
-            UIView.animate(withDuration: 0.3, animations: {
-                self.alpha = 0
-            }, completion: { (success) in
-                self.isHidden = true
-            })
-        }
-        
-//        isHidden = visible
-        
 //        guard let targetView = UIApplication.shared.keyWindow?.rootViewController?.view else { return }
+        
         let targetView = keyWindow(from: textView)
         
         UIGraphicsBeginImageContextWithOptions(CGSize(width: UZLoupe.radius * 2, height: UZLoupe.radius * 2), false, 0)
@@ -95,9 +135,10 @@ internal class UZLoupe: UIView {
         
         nextCenter.y -= UZLoupe.radius
     
+        let prev = isHidden
         isHidden = true
         textView.layer.render(in: context)
-        isHidden = false
+        isHidden = prev
         
         image = UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
         UIGraphicsEndImageContext()

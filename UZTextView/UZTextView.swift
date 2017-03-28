@@ -374,6 +374,8 @@ public class UZTextView: UIView {
         } else if rightCursorRect.insetBy(dx: -5, dy: -5).contains(point) {
             cursorStatus = .movingRightCursor
             longPressGestureRecognizer?.isEnabled = false
+        } else {
+            selectedRange = .notFound
         }
     }
     
@@ -423,8 +425,6 @@ public class UZTextView: UIView {
             let index = characterIndex(at: point)
             if selectedRange.arange ~= index {
                 showUIMenuForSelectedString(at: point)
-            } else {
-                selectedRange = NSRange.notFound
             }
         }
         cursorStatus = .none
@@ -487,15 +487,16 @@ public class UZTextView: UIView {
         
         UIMenuController.shared.setMenuVisible(false, animated: true)
         
-        if let delegate = delegate {
-            delegate.selectingStringBegun(self)
-        }
-        
-        
         manageCursorWhenTouchesBegan(at: point)
         updateTappedLinkRange(at: point)
         setNeedsDisplay()
         updateCursors()
+        if cursorStatus != .none {
+            loupe.setVisible(visible: true)
+            if let delegate = delegate {
+                delegate.selectingStringBegun(self)
+            }
+        }
         updateLoupe(touch: touch)
     }
     
@@ -516,24 +517,26 @@ public class UZTextView: UIView {
     public func updateLoupe(touch: UITouch) {
         switch cursorStatus {
         case .movingLeftCursor:
-            loupe.move(to: touch.location(in: self), visible: true)
+            loupe.move(to: touch.location(in: self))
         case .movingRightCursor:
-            loupe.move(to: touch.location(in: self), visible: true)
+            loupe.move(to: touch.location(in: self))
         case .none:
-            loupe.move(to: touch.location(in: self), visible: false)
+            loupe.move(to: touch.location(in: self))
         }
     }
     
     public func updateLoupe(gestureRecognizer: UIGestureRecognizer) {
         switch gestureRecognizer.state {
         case .began:
-            loupe.move(to: gestureRecognizer.location(in: self), visible: true)
+            loupe.setVisible(visible: true)
+            loupe.move(to: gestureRecognizer.location(in: self))
         case .changed:
-            loupe.move(to: gestureRecognizer.location(in: self), visible: true)
+            loupe.move(to: gestureRecognizer.location(in: self))
         case .cancelled:
-            loupe.move(to: gestureRecognizer.location(in: self), visible: false)
+            loupe.move(to: gestureRecognizer.location(in: self))
         case .ended:
-            loupe.move(to: gestureRecognizer.location(in: self), visible: false)
+            loupe.setVisible(visible: false)
+            loupe.move(to: gestureRecognizer.location(in: self))
         default:
             do {}
         }
@@ -542,8 +545,10 @@ public class UZTextView: UIView {
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
-        if let delegate = delegate {
-            delegate.selectingStringEnded(self)
+        if cursorStatus != .none {
+            if let delegate = delegate {
+                delegate.selectingStringEnded(self)
+            }
         }
         manageCursorWhenTouchesCancelled(at: point)
         tappedLinkRange = NSRange.notFound
@@ -555,14 +560,17 @@ public class UZTextView: UIView {
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
-        if let delegate = delegate {
-            delegate.selectingStringEnded(self)
+        if cursorStatus != .none {
+            if let delegate = delegate {
+                delegate.selectingStringEnded(self)
+            }
         }
         testTappedLinkRange()   /// this method must be called before calling manageCursorWhenTouchesEnded
         manageCursorWhenTouchesEnded(at: point)
         setNeedsDisplay()
         updateCursors()
         updateLoupe(touch: touch)
+        loupe.setVisible(visible: false)
     }
     
     // MARK: -
@@ -755,7 +763,7 @@ public class UZTextView: UIView {
         case .began:
             let index = characterIndex(at: point)
             var effectiveRange = NSRange.notFound
-            if index < self.attributedString.string.utf16.count {
+            if index != NSNotFound {
                 let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
                 if let link = attribute[NSLinkAttributeName] {
                     print(link)

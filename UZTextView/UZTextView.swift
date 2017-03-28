@@ -264,8 +264,8 @@ public class UZTextView: UIView {
     /// Cursor status
     private var cursorStatus = CursorStatus.none
     
-    private let leftCursor = UZCursorView.createLeftCursor()
-    private let rightCursor = UZCursorView.createRightCursor()
+    private let leftCursor = UZCursor.createLeftCursor()
+    private let rightCursor = UZCursor.createRightCursor()
 
     /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {

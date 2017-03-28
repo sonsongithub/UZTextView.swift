@@ -1,5 +1,5 @@
 //
-//  UZCursorView.swift
+//  UZCursor.swift
 //  UZTextView
 //
 //  Created by sonson on 2017/03/27.
@@ -11,17 +11,17 @@ import UIKit
 /**
  Cursor which is showed while user is selecting any string in the view.
  */
-internal class UZCursorView: UIView {
+internal class UZCursor: UIView {
     /// Cursor's direction.
-    private enum UZCursorViewDirection {
+    private enum UZCursorDirection {
         case up
         case down
     }
     
     /// Cursor's direction.
-    private let direction: UZCursorViewDirection
+    private let direction: UZCursorDirection
     
-    private init(with aDirection: UZCursorViewDirection) {
+    private init(with aDirection: UZCursorDirection) {
         direction = aDirection
         super.init(frame: CGRect.zero)
         backgroundColor = UIColor.clear
@@ -46,8 +46,8 @@ internal class UZCursorView: UIView {
      - returns: Tuple which contains center of the circle, rectangle of the axis and radius of the circle in the view.
      */
     private func cursorRenderingInfo(_ rect: CGRect) -> (CGPoint, CGRect, CGFloat) {
-        let axisLength = rect.size.height - UZCursorView.width
-        let radius = UZCursorView.width / 2
+        let axisLength = rect.size.height - UZCursor.width
+        let radius = UZCursor.width / 2
         switch direction {
         case .up:
             let poleRect = CGRect(x: rect.midX - 1, y: rect.size.height - axisLength - 1, width: 2, height: axisLength + 1)
@@ -81,13 +81,13 @@ internal class UZCursorView: UIView {
     // MARK: -
     
     /// Create left cursor
-    internal static func createLeftCursor() -> UZCursorView {
-        return UZCursorView(with: .up)
+    internal static func createLeftCursor() -> UZCursor {
+        return UZCursor(with: .up)
     }
     
     /// Create right cursor
-    internal static func createRightCursor() -> UZCursorView {
-        return UZCursorView(with: .down)
+    internal static func createRightCursor() -> UZCursor {
+        return UZCursor(with: .down)
     }
     
     /**
@@ -98,16 +98,16 @@ internal class UZCursorView: UIView {
         switch direction {
         case .up:
             var rect = charcaterRect
-            rect.origin.x -= UZCursorView.width * 0.5
-            rect.origin.y -= UZCursorView.extendHeight
-            rect.size.width = UZCursorView.width
-            rect.size.height += UZCursorView.extendHeight
+            rect.origin.x -= UZCursor.width * 0.5
+            rect.origin.y -= UZCursor.extendHeight
+            rect.size.width = UZCursor.width
+            rect.size.height += UZCursor.extendHeight
             self.frame = rect
         case .down:
             var rect = charcaterRect
-            rect.origin.x = rect.origin.x + rect.size.width - UZCursorView.width * 0.5
-            rect.size.width = UZCursorView.width
-            rect.size.height += UZCursorView.extendHeight
+            rect.origin.x = rect.origin.x + rect.size.width - UZCursor.width * 0.5
+            rect.size.width = UZCursor.width
+            rect.size.height += UZCursor.extendHeight
             self.frame = rect
         }
     }

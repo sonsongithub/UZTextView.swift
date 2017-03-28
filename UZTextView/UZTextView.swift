@@ -266,6 +266,7 @@ public class UZTextView: UIView {
     
     private let leftCursor = UZCursor.createLeftCursor()
     private let rightCursor = UZCursor.createRightCursor()
+    private let loupe = UZLoupe()
 
     /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {
@@ -311,6 +312,7 @@ public class UZTextView: UIView {
         rightCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
         self.addSubview(rightCursor)
         rightCursor.isHidden = true
+        loupe.textView = self
     }
     
     required public init?(coder aDecoder: NSCoder) {
@@ -322,6 +324,7 @@ public class UZTextView: UIView {
         rightCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
         self.addSubview(rightCursor)
         rightCursor.isHidden = true
+        loupe.textView = self
     }
     
     public override func layoutSubviews() {
@@ -488,10 +491,12 @@ public class UZTextView: UIView {
             delegate.selectingStringBegun(self)
         }
         
+        
         manageCursorWhenTouchesBegan(at: point)
         updateTappedLinkRange(at: point)
         setNeedsDisplay()
         updateCursors()
+        updateLoupe(touch: touch)
     }
     
     public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -505,6 +510,21 @@ public class UZTextView: UIView {
         tappedLinkRange = NSRange.notFound
         setNeedsDisplay()
         updateCursors()
+        updateLoupe(touch: touch)
+    }
+    
+    public func updateLoupe(touch: UITouch) {
+        loupe.move(to: touch.location(in: self))
+        
+        switch cursorStatus {
+        case .movingLeftCursor:
+            loupe.isHidden = false
+        case .movingRightCursor:
+            loupe.isHidden = false
+        case .none:
+            loupe.isHidden = true
+        }
+        
     }
     
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -517,6 +537,7 @@ public class UZTextView: UIView {
         tappedLinkRange = NSRange.notFound
         setNeedsDisplay()
         updateCursors()
+        updateLoupe(touch: touch)
     }
     
     public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -529,6 +550,7 @@ public class UZTextView: UIView {
         manageCursorWhenTouchesEnded(at: point)
         setNeedsDisplay()
         updateCursors()
+        updateLoupe(touch: touch)
     }
     
     // MARK: -
@@ -666,7 +688,7 @@ public class UZTextView: UIView {
         if selectedRange.arange ~= index { return }
         var effectiveRange = NSRange.notFound
         let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
-        guard let _ = attribute[NSLinkAttributeName] else { tappedLinkRange = NSRange.notFound; return }
+        guard let _ = attribute[NSLinkAttributeName] else { tappedLinkRange = .notFound; return }
         tappedLinkRange = effectiveRange
         longPressGestureRecognizer?.isEnabled = false
     }

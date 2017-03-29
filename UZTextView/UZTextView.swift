@@ -9,10 +9,9 @@
 import UIKit
 import CoreText
 
-
 extension Sequence where Iterator.Element == CGRect {
     var union: CGRect {
-        return reduce(CGRect.zero, { (result, rect) -> CGRect in
+        return reduce(CGRect.null, { (result, rect) -> CGRect in
             return result.union(rect)
         })
     }
@@ -225,6 +224,9 @@ fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
     })
 }
 
+/**
+ The value of this attribute is an CGRect object. The default value of this property is nil, indicating no information about the area.
+ */
 public let UZTextViewClickedRect = "UZTextViewClickedRect"
 
 /**
@@ -232,32 +234,36 @@ public let UZTextViewClickedRect = "UZTextViewClickedRect"
  */
 public protocol UZTextViewDelegate: class {
     /**
-     To be written.
-     - parameter textView:
-     - parameter attribute:
+     Tells the delegate that the link which contains ```attribute``` was tapped.
+     Returns menu items to display in an element's contextual menu.
+     - parameter textView: The text view in which the link is tapped.
+     - parameter attribute: The attributes for the linke at which user tapped.
      */
     func textView(_ textView: UZTextView, didClickLinkAttribute attribute: Any)
     
     /**
-     To be written.
-     - parameter textView:
-     - parameter attribute:
+     Tells the delegate that the link which contains ```attribute``` was tapped longly.
+     - parameter textView: The text view in which the link is longly tapped.
+     - parameter attribute: The attributes for the linke at which user tapped.
      */
     func textView(_ textView: UZTextView, didLongTapLinkAttribute attribute: Any)
     
     /**
-     To be written.
-     - parameter textView:
+     Tells the delegate that selecting of the specified text view has begun.
+     - parameter textView: The text view in which editing began.
      */
     func selectingStringBegun(_ textView: UZTextView)
     
     /**
-     To be written.
-     - parameter textView:
+     Tells the delegate that selecting of the specified text view has ended.
+     - parameter textView: The text view in which editing ended.
      */
     func selectingStringEnded(_ textView: UZTextView)
 }
 
+/**
+ Clickable and selectable text view for iOS/macOS/watchOS/tvOS
+ */
 public class UZTextView: UIView {
     /// margin for tapping the characters.
     static let tapMargin = CGFloat(5)
@@ -291,8 +297,11 @@ public class UZTextView: UIView {
     /// Cursor status
     private var cursorStatus = CursorStatus.none
     
+    /// The cursor of the left side of the selection.
     private let leftCursor = UZCursor.createLeftCursor()
+    /// The cursor of the right side of the selection.
     private let rightCursor = UZCursor.createRightCursor()
+    /// The loupe for selecting text in the view.
     private let loupe = UZLoupe()
 
     /// The styled text displayed by the view
@@ -334,16 +343,6 @@ public class UZTextView: UIView {
     
     override public var bounds: CGRect {
         didSet { updateLayout() }
-    }
-    
-    private func prepareSubviews() {
-        leftCursor.frame = .zero
-        self.addSubview(leftCursor)
-        leftCursor.isHidden = true
-        rightCursor.frame = .zero
-        self.addSubview(rightCursor)
-        rightCursor.isHidden = true
-        loupe.textView = self
     }
     
     override public init(frame: CGRect) {
@@ -643,6 +642,10 @@ public class UZTextView: UIView {
     
     // MARK: -
     
+    /**
+     Update the location of the loupe according to the ```UITouch``` object.
+     - parameter touch: ```UITouch``` object which induced the event.
+     */
     public func updateLoupe(touch: UITouch) {
         switch cursorStatus {
         case .movingLeftCursor:
@@ -654,6 +657,10 @@ public class UZTextView: UIView {
         }
     }
     
+    /**
+     Update the location of the loupe according to the ```UIGestureRecognizer``` object.
+     - parameter gestureRecognizer: ```UIGestureRecognizer``` object which induced the event.
+     */
     public func updateLoupe(gestureRecognizer: UIGestureRecognizer) {
         switch gestureRecognizer.state {
         case .began:
@@ -672,7 +679,11 @@ public class UZTextView: UIView {
     }
     
     // MARK: -
-        
+    
+    /**
+     Update the position of the cursor according to ```selectedRange``` property.
+     If ```selectedRange```'s length is zero, makes cursor hidden.
+     */
     private func updateCursors() {
         if selectedRange.length > 0 {
             do {
@@ -810,6 +821,19 @@ public class UZTextView: UIView {
     // MARK: -
     
     /**
+     Prepare subviews, such as UZCursor and UZLoupe objects.
+     */
+    private func prepareSubviews() {
+        leftCursor.frame = .zero
+        self.addSubview(leftCursor)
+        leftCursor.isHidden = true
+        rightCursor.frame = .zero
+        self.addSubview(rightCursor)
+        rightCursor.isHidden = true
+        loupe.textView = self
+    }
+    
+    /**
      Returns CGRect array which contains rectangles around specified characters. If there are no characaters, returns an empty array.
      - parameter range: Index range which specifies the characters.
      - returns: CGRect array which contains rectangles around specified characters. A CGRect object is generated each line if the characters extend more than two lines.
@@ -847,7 +871,12 @@ public class UZTextView: UIView {
         UIMenuController.shared.setMenuVisible(true, animated: true)
     }
     
-    
+    /**
+     Returns attributes as an dictionary from character at where user tapped.
+     If character does not have any attributes, returns nil.
+     - parameter point: CGPoint structure which contains location which user tapped.
+     - returns: The attributes for the character at where user tapped.
+     */
     public func attributes(at point: CGPoint) -> [String: Any]? {
         let pointForText = CGPoint(x: (point.x - contentInset.left) / scale, y: (point.y - contentInset.top) / scale)
         let index = characterIndex(at: pointForText)

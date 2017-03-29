@@ -17,20 +17,37 @@ class ViewController: UIViewController, UZTextViewDelegate {
 
     func textView(_ textView: UZTextView, didClickLinkAttribute attribute: Any) {
         print(#function)
-        if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] {
-            print(link)
+        if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] as? URL {
+            UIApplication.shared.open(link, options: [:], completionHandler: nil)
         }
     }
     
     func textView(_ textView: UZTextView, didLongTapLinkAttribute attribute: Any) {
         print(#function)
-        if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] {
-            print(link)
+        if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] as? URL {
+            let sheet = UIAlertController(title: "Link", message: link.absoluteString, preferredStyle: .actionSheet)
+            do {
+                let action = UIAlertAction(title: "Copy", style: .default) { (action) in
+                    print("copy")
+                }
+                sheet.addAction(action)
+            }
+            do {
+                let action = UIAlertAction(title: "Open is Safari", style: .default) { (action) in
+                    UIApplication.shared.open(link, options: [:], completionHandler: nil)
+                }
+                sheet.addAction(action)
+            }
+            do {
+                let action = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
+                }
+                sheet.addAction(action)
+            }
+            self.present(sheet, animated: true, completion: nil)
         }
     }
     
     func selectingStringBegun(_ textView: UZTextView) {
-//        print(#function)
     }
     
     func selectingStringEnded(_ textView: UZTextView) {

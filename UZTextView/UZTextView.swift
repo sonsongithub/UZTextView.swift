@@ -247,7 +247,7 @@ public class UZTextView: UIView {
     /// CGSize structure which contains the size of string which will be rendered in the view. This size and ```contentInset``` is the size of the view.
     private var contentSize: CGSize = .zero
     /// The distance that the string rendering area is inset from the view. This inset and ```contentSize``` is the size of the view.
-    var contentInset: UIEdgeInsets = .zero {
+    public var contentInset: UIEdgeInsets = .zero {
         didSet { updateLayout() }
     }
     
@@ -288,6 +288,20 @@ public class UZTextView: UIView {
     /// The text displayed by the label, read only
     public var string: String {
         return attributedString.string
+    }
+    
+    /**
+     Estimate the size of an attributed string.
+     - parameter attributedString: Attributed string to be rendered.
+     - parameter width: The length which restrict the width of the attributed string.
+     - parameter inset: The distance that the string rendering area is inset from the view, default is UIEdgeInsets.zero.
+     - returns: CGSize structure which contains the size of an attributed string.
+     */
+    public static func size(of attributedString: NSAttributedString, restrictedWithin width: CGFloat, inset: UIEdgeInsets = .zero) -> CGSize {
+        let setter = CTFramesetterCreateWithAttributedString(attributedString)
+        let restrictedSize = CGSize(width: width - (inset.left + inset.right), height: CGFloat.greatestFiniteMagnitude)
+        let size = CTFramesetterSuggestFrameSizeWithConstraints(setter, attributedString.fullCFRange, nil, restrictedSize, nil)
+        return CGSize(width: size.width + (inset.left + inset.right), height: size.height + (inset.top + inset.bottom))
     }
     
     // MARK: -
@@ -563,6 +577,7 @@ public class UZTextView: UIView {
                 delegate.selectingStringEnded(self)
             }
         }
+        
         testTappedLinkRange()   /// this method must be called before calling manageCursorWhenTouchesEnded
         manageCursorWhenTouchesEnded(at: point)
         setNeedsDisplay()

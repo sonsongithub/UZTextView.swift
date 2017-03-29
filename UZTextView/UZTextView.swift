@@ -205,6 +205,8 @@ fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
     })
 }
 
+public let UZTextViewClickedRect = "UZTextViewClickedRect"
+
 /**
  The methods of this protocol allow the delegate to manage selecting string, tapping link in the view and long tapping it in the view.
  */
@@ -304,6 +306,56 @@ public class UZTextView: UIView {
         return CGSize(width: size.width + (inset.left + inset.right), height: size.height + (inset.top + inset.bottom))
     }
     
+    public func attributes(at point: CGPoint) -> [String: Any]? {
+        let pointForText = CGPoint(x: (point.x - contentInset.left) / scale, y: (point.y - contentInset.top) / scale)
+        let index = characterIndex(at: pointForText)
+        guard index != NSNotFound else { return nil }
+        var effectiveRange = NSRange.notFound
+        var attributes = attributedString.attributes(at: index, effectiveRange: &effectiveRange)
+        
+        let rects = rectangles(with: effectiveRange)
+        guard let first = rects.first else { return nil }
+        var r = rects.reduce(first) { (result, rect) -> CGRect in
+            return result.union(rect)
+        }
+        
+        r.origin.x = r.origin.x * scale + contentInset.left
+        r.origin.y = r.origin.y * scale + contentInset.top
+        r.size.width *= scale
+        r.size.height *= scale
+        
+        attributes[UZTextViewClickedRect] = r
+        
+        return attributes
+    }
+    
+//    - (NSDictionary*)attributesAtPoint:(CGPoint)point {
+//    if (_scale != 1) {
+//    point.x /= _scale;
+//    point.y /= _scale;
+//    }
+//    
+//    __block NSRange resultRange = NSMakeRange(0, 0);
+//    
+//    _tappedLinkAttribute = nil;
+//    
+//    CFIndex index = [self indexForPoint:point];
+//    if (index == kCFNotFound)
+//    return nil;
+//    
+//    NSDictionary *attribute = [self.attributedString attributesAtIndex:index effectiveRange:&resultRange];
+//    CGRect rect = [self circumscribingRectForStringFromIndex:resultRange.location toIndex:resultRange.location + resultRange.length - 1];
+//    
+//    if (attribute[NSLinkAttributeName]) {
+//    NSMutableDictionary *attr = [NSMutableDictionary dictionaryWithDictionary:attribute];
+//    attr[UZTextViewClickedRect] = [NSValue valueWithCGRect:rect];
+//    return attr;
+//    }
+//    
+//    return nil;
+//    }
+
+    
     // MARK: -
     
     override public var frame: CGRect {
@@ -315,10 +367,10 @@ public class UZTextView: UIView {
     }
     
     private func prepareSubviews() {
-        leftCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+        leftCursor.frame = .zero
         self.addSubview(leftCursor)
         leftCursor.isHidden = true
-        rightCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
+        rightCursor.frame = .zero
         self.addSubview(rightCursor)
         rightCursor.isHidden = true
         loupe.textView = self

@@ -8,6 +8,8 @@
 
 import UIKit
 
+/**
+ */
 internal class UZLoupe: UIView, CAAnimationDelegate {
     static let radius = CGFloat(60)
     var image = UIImage()
@@ -147,8 +149,6 @@ internal class UZLoupe: UIView, CAAnimationDelegate {
     
     internal func move(to point: CGPoint) {
         guard let textView = textView else { return }
-        
-//        guard let targetView = UIApplication.shared.keyWindow?.rootViewController?.view else { return }
         
         let targetView = keyWindow(from: textView)
         

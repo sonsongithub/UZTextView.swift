@@ -34,9 +34,9 @@ internal class UZCursor: UIView {
     }
     
     /// Static width of this view.
-    private static var width = CGFloat(10)
+    private static var width = CGFloat(15)
     /// Extended height of pole of the cursor.
-    private static var extendHeight = CGFloat(15)
+    private static var extendHeight = CGFloat(20)
     /// Ratio of the radius to the height of the view.
     private static var radiusRatio = CGFloat(0.3)
     

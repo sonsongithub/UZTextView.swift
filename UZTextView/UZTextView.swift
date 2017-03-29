@@ -339,7 +339,6 @@ public class UZTextView: UIView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         updateLayout()
-        self.setNeedsDisplay()
     }
     
     override public func draw(_ rect: CGRect) {
@@ -678,14 +677,22 @@ public class UZTextView: UIView {
         if selectedRange.length > 0 {
             do {
                 let rects = rectangles(with: NSRange(location: selectedRange.location, length: 1))
-                guard let rect = rects.first else { return }
-                leftCursor.updateLocation(in: rect)
+                guard var rect = rects.first else { return }
+                rect.origin.x *= scale
+                rect.origin.y *= scale
+                rect.size.width *= scale
+                rect.size.height *= scale
+                leftCursor.updateLocation(in: rect.offsetBy(dx: contentInset.left, dy: contentInset.top))
                 leftCursor.isHidden = false
             }
             do {
                 let rects = rectangles(with: NSRange(location: selectedRange.location + selectedRange.length - 1, length: 1))
-                guard let rect = rects.first else { return }
-                rightCursor.updateLocation(in: rect)
+                guard var rect = rects.first else { return }
+                rect.origin.x *= scale
+                rect.origin.y *= scale
+                rect.size.width *= scale
+                rect.size.height *= scale
+                rightCursor.updateLocation(in: rect.offsetBy(dx: contentInset.left, dy: contentInset.top))
                 rightCursor.isHidden = false
             }
         } else {
@@ -723,7 +730,6 @@ public class UZTextView: UIView {
         let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
         guard let _ = attribute[NSLinkAttributeName] else { tappedLinkRange = .notFound; return }
         tappedLinkRange = effectiveRange
-        longPressGestureRecognizer?.isEnabled = false
     }
     
     /**
@@ -744,6 +750,13 @@ public class UZTextView: UIView {
             contentSize = CGSize(width: self.frame.size.width - horizontalMargin, height: CGFloat.greatestFiniteMagnitude)
         }
         
+        selectedRange = .notFound
+        tappedLinkRange = .notFound
+        
+        leftCursor.isHidden = true
+        rightCursor.isHidden = true
+        loupe.setVisible(visible: false)
+        
         let frameSetter = CTFramesetterCreateWithAttributedString(attributedString)
         let frameSize = CTFramesetterSuggestFrameSizeWithConstraints(frameSetter, attributedString.fullCFRange, nil, contentSize, nil)
         contentSize.height = frameSize.height
@@ -751,6 +764,7 @@ public class UZTextView: UIView {
         let path = CGPath(rect: contentRect, transform: nil)
         ctframe = CTFramesetterCreateFrame(frameSetter, CFRange.zero, path, nil)
         ctframeSetter = frameSetter
+        setNeedsDisplay()
     }
     
     /**
@@ -783,8 +797,6 @@ public class UZTextView: UIView {
                     if let delegate = delegate {
                         delegate.textView(self, didLongTapLinkAttribute: attribute)
                     }
-                    gestureRecognizer.isEnabled = false
-                    gestureRecognizer.isEnabled = true
                 } else {
                     selectedRange = rangeOfWord(at: point)
                     updateLoupe(gestureRecognizer: gestureRecognizer)

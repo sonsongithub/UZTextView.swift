@@ -74,14 +74,12 @@ internal class UZLoupe: UIView, CAAnimationDelegate {
             animation.keyTimes = [0, 0.7, 1]
             return animation
         }()
-        
         let scaleAnimation: CAKeyframeAnimation = {
             let animation = CAKeyframeAnimation(keyPath: "transform.scale")
             animation.values = [0, 1]
             animation.keyTimes = [0, 1]
             return animation
         }()
-        
         let tranlateAnimation: CAKeyframeAnimation = {
             let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
             animation.values = [(self.frame.size.height * CGFloat(0.5)) as NSNumber, 0]
@@ -101,13 +99,41 @@ internal class UZLoupe: UIView, CAAnimationDelegate {
     }
     
     private func hide() {
-        isHidden = true
+        let alphaAnimation: CAKeyframeAnimation = {
+            let animation = CAKeyframeAnimation(keyPath: "opacity")
+            animation.values = [1, 0.97, 0]
+            animation.keyTimes = [0, 0.7, 1]
+            return animation
+        }()
+        let scaleAnimation: CAKeyframeAnimation = {
+            let animation = CAKeyframeAnimation(keyPath: "transform.scale")
+            animation.values = [1, 0]
+            animation.keyTimes = [0, 1]
+            return animation
+        }()
+        let tranlateAnimation: CAKeyframeAnimation = {
+            let animation = CAKeyframeAnimation(keyPath: "transform.translation.y")
+            animation.values = [0, (self.frame.size.height * CGFloat(0.5)) as NSNumber]
+            animation.keyTimes = [0, 1]
+            return animation
+        }()
+        
+        let group = CAAnimationGroup()
+        group.animations = [alphaAnimation, scaleAnimation, tranlateAnimation]
+        group.duration = 0.2
+        group.isRemovedOnCompletion = false
+        group.fillMode = kCAFillModeForwards
+        group.delegate = self
+        
+        group.setValue("hide", forKey: "name")
+        self.layer.add(group, forKey: "hide")
     }
     
     func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
         guard let name = anim.value(forKey: "name") as? String else { return }
         if name == "show" {
-            print("end")
+        } else if name == "hide" {
+            isHidden = true
         }
     }
     

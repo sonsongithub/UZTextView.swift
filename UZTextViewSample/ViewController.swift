@@ -51,7 +51,6 @@ class ViewController: UIViewController, UZTextViewDelegate {
     }
     
     func selectingStringEnded(_ textView: UZTextView) {
-//        print(#function)
     }
     
     override func viewDidLoad() {

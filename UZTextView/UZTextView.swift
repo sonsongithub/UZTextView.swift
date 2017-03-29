@@ -9,6 +9,26 @@
 import UIKit
 import CoreText
 
+
+extension Sequence where Iterator.Element == CGRect {
+    var union: CGRect {
+        return reduce(CGRect.zero, { (result, rect) -> CGRect in
+            return result.union(rect)
+        })
+    }
+}
+
+extension CGRect {
+    fileprivate func fromContentCordinateToView(scale: CGFloat, contentInset: UIEdgeInsets) -> CGRect {
+        return CGRect(
+            x: self.origin.x * scale + contentInset.left,
+            y: self.origin.y * scale + contentInset.top,
+            width: self.size.width * scale,
+            height: self.size.height * scale
+        )
+    }
+}
+
 extension NSAttributedString {
     /// A range of all string as CFRange.
     fileprivate var fullCFRange: CFRange {
@@ -306,56 +326,6 @@ public class UZTextView: UIView {
         return CGSize(width: size.width + (inset.left + inset.right), height: size.height + (inset.top + inset.bottom))
     }
     
-    public func attributes(at point: CGPoint) -> [String: Any]? {
-        let pointForText = CGPoint(x: (point.x - contentInset.left) / scale, y: (point.y - contentInset.top) / scale)
-        let index = characterIndex(at: pointForText)
-        guard index != NSNotFound else { return nil }
-        var effectiveRange = NSRange.notFound
-        var attributes = attributedString.attributes(at: index, effectiveRange: &effectiveRange)
-        
-        let rects = rectangles(with: effectiveRange)
-        guard let first = rects.first else { return nil }
-        var r = rects.reduce(first) { (result, rect) -> CGRect in
-            return result.union(rect)
-        }
-        
-        r.origin.x = r.origin.x * scale + contentInset.left
-        r.origin.y = r.origin.y * scale + contentInset.top
-        r.size.width *= scale
-        r.size.height *= scale
-        
-        attributes[UZTextViewClickedRect] = r
-        
-        return attributes
-    }
-    
-//    - (NSDictionary*)attributesAtPoint:(CGPoint)point {
-//    if (_scale != 1) {
-//    point.x /= _scale;
-//    point.y /= _scale;
-//    }
-//    
-//    __block NSRange resultRange = NSMakeRange(0, 0);
-//    
-//    _tappedLinkAttribute = nil;
-//    
-//    CFIndex index = [self indexForPoint:point];
-//    if (index == kCFNotFound)
-//    return nil;
-//    
-//    NSDictionary *attribute = [self.attributedString attributesAtIndex:index effectiveRange:&resultRange];
-//    CGRect rect = [self circumscribingRectForStringFromIndex:resultRange.location toIndex:resultRange.location + resultRange.length - 1];
-//    
-//    if (attribute[NSLinkAttributeName]) {
-//    NSMutableDictionary *attr = [NSMutableDictionary dictionaryWithDictionary:attribute];
-//    attr[UZTextViewClickedRect] = [NSValue valueWithCGRect:rect];
-//    return attr;
-//    }
-//    
-//    return nil;
-//    }
-
-    
     // MARK: -
     
     override public var frame: CGRect {
@@ -386,11 +356,6 @@ public class UZTextView: UIView {
         super.init(coder: aDecoder)
         setupGestureRecognizer()
         prepareSubviews()
-    }
-    
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        updateLayout()
     }
     
     override public func draw(_ rect: CGRect) {
@@ -487,29 +452,11 @@ public class UZTextView: UIView {
         if selectedRange.length > 0 {
             let index = characterIndex(at: point)
             if selectedRange.arange ~= index {
-                showUIMenuForSelectedString(at: point)
+                showUIMenuForSelectedString()
             }
         }
         cursorStatus = .none
         longPressGestureRecognizer?.isEnabled = true
-    }
-    
-    /**
-     Show UIMenuController which handles selected string.
-     - parameter point: CGPoint structure which contains the location at which user tapped.
-     */
-    private func showUIMenuForSelectedString(at point: CGPoint) {
-        let tapped = CGRect(x: point.x / scale - contentInset.left, y: point.y / scale - contentInset.top, width: 1, height: 1)
-        let targetRect = rectangles(with: selectedRange)
-            .map({
-                CGRect(x: $0.origin.x / scale - contentInset.left, y: $0.origin.y / scale - contentInset.top, width: $0.size.width / scale, height: $0.size.height / scale)
-            })
-            .reduce(tapped, { (result, rect) -> CGRect in
-                return rect.union(result)
-            })
-        self.becomeFirstResponder()
-        UIMenuController.shared.setTargetRect(targetRect, in: self)
-        UIMenuController.shared.setMenuVisible(true, animated: true)
     }
     
     // MARK: -
@@ -577,34 +524,6 @@ public class UZTextView: UIView {
         updateLoupe(touch: touch)
     }
     
-    public func updateLoupe(touch: UITouch) {
-        switch cursorStatus {
-        case .movingLeftCursor:
-            loupe.move(to: touch.location(in: self))
-        case .movingRightCursor:
-            loupe.move(to: touch.location(in: self))
-        case .none:
-            loupe.move(to: touch.location(in: self))
-        }
-    }
-    
-    public func updateLoupe(gestureRecognizer: UIGestureRecognizer) {
-        switch gestureRecognizer.state {
-        case .began:
-            loupe.setVisible(visible: true)
-            loupe.move(to: gestureRecognizer.location(in: self))
-        case .changed:
-            loupe.move(to: gestureRecognizer.location(in: self))
-        case .cancelled:
-            loupe.move(to: gestureRecognizer.location(in: self))
-        case .ended:
-            loupe.setVisible(visible: false)
-            loupe.move(to: gestureRecognizer.location(in: self))
-        default:
-            do {}
-        }
-    }
-    
     public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
@@ -628,7 +547,6 @@ public class UZTextView: UIView {
                 delegate.selectingStringEnded(self)
             }
         }
-        
         testTappedLinkRange()   /// this method must be called before calling manageCursorWhenTouchesEnded
         manageCursorWhenTouchesEnded(at: point)
         setNeedsDisplay()
@@ -722,7 +640,37 @@ public class UZTextView: UIView {
         context.fill(leftCursorRect)
         context.fill(rightCursorRect)
     }
-
+    
+    // MARK: -
+    
+    public func updateLoupe(touch: UITouch) {
+        switch cursorStatus {
+        case .movingLeftCursor:
+            loupe.move(to: touch.location(in: self))
+        case .movingRightCursor:
+            loupe.move(to: touch.location(in: self))
+        case .none:
+            loupe.move(to: touch.location(in: self))
+        }
+    }
+    
+    public func updateLoupe(gestureRecognizer: UIGestureRecognizer) {
+        switch gestureRecognizer.state {
+        case .began:
+            loupe.setVisible(visible: true)
+            loupe.move(to: gestureRecognizer.location(in: self))
+        case .changed:
+            loupe.move(to: gestureRecognizer.location(in: self))
+        case .cancelled:
+            loupe.move(to: gestureRecognizer.location(in: self))
+        case .ended:
+            loupe.setVisible(visible: false)
+            loupe.move(to: gestureRecognizer.location(in: self))
+        default:
+            do {}
+        }
+    }
+    
     // MARK: -
         
     private func updateCursors() {
@@ -730,21 +678,15 @@ public class UZTextView: UIView {
             do {
                 let rects = rectangles(with: NSRange(location: selectedRange.location, length: 1))
                 guard var rect = rects.first else { return }
-                rect.origin.x *= scale
-                rect.origin.y *= scale
-                rect.size.width *= scale
-                rect.size.height *= scale
-                leftCursor.updateLocation(in: rect.offsetBy(dx: contentInset.left, dy: contentInset.top))
+                rect = rect.fromContentCordinateToView(scale: scale, contentInset: contentInset)
+                leftCursor.updateLocation(in: rect)
                 leftCursor.isHidden = false
             }
             do {
                 let rects = rectangles(with: NSRange(location: selectedRange.location + selectedRange.length - 1, length: 1))
                 guard var rect = rects.first else { return }
-                rect.origin.x *= scale
-                rect.origin.y *= scale
-                rect.size.width *= scale
-                rect.size.height *= scale
-                rightCursor.updateLocation(in: rect.offsetBy(dx: contentInset.left, dy: contentInset.top))
+                rect = rect.fromContentCordinateToView(scale: scale, contentInset: contentInset)
+                rightCursor.updateLocation(in: rect)
                 rightCursor.isHidden = false
             }
         } else {
@@ -819,6 +761,8 @@ public class UZTextView: UIView {
         setNeedsDisplay()
     }
     
+    // MARK: -
+    
     /**
      Setup and attach gesture recognizer to the view.
      */
@@ -835,9 +779,6 @@ public class UZTextView: UIView {
      */
     func didChangeLongPressGesture(_ gestureRecognizer: UILongPressGestureRecognizer) {
         let point = gestureRecognizer.location(in: self, inset: contentInset, scale: scale)
-        
-        print(gestureRecognizer.stateDescription)
-        
         switch gestureRecognizer.state {
         case .began:
             let index = characterIndex(at: point)
@@ -866,6 +807,8 @@ public class UZTextView: UIView {
         updateCursors()
     }
     
+    // MARK: -
+    
     /**
      Returns CGRect array which contains rectangles around specified characters. If there are no characaters, returns an empty array.
      - parameter range: Index range which specifies the characters.
@@ -885,6 +828,38 @@ public class UZTextView: UIView {
                 return nil
             }
         })
+    }
+    
+    /**
+     Show UIMenuController which handles selected string.
+     - parameter point: CGPoint structure which contains the location at which user tapped.
+     */
+    private func showUIMenuForSelectedString() {
+        let targetRect = rectangles(with: selectedRange)
+            .map({
+                CGRect(x: $0.origin.x / scale - contentInset.left, y: $0.origin.y / scale - contentInset.top, width: $0.size.width / scale, height: $0.size.height / scale)
+            })
+            .reduce(CGRect.null, { (result, rect) -> CGRect in
+                return rect.union(result)
+            })
+        self.becomeFirstResponder()
+        UIMenuController.shared.setTargetRect(targetRect, in: self)
+        UIMenuController.shared.setMenuVisible(true, animated: true)
+    }
+    
+    
+    public func attributes(at point: CGPoint) -> [String: Any]? {
+        let pointForText = CGPoint(x: (point.x - contentInset.left) / scale, y: (point.y - contentInset.top) / scale)
+        let index = characterIndex(at: pointForText)
+        guard index != NSNotFound else { return nil }
+        var effectiveRange = NSRange.notFound
+        var attributes = attributedString.attributes(at: index, effectiveRange: &effectiveRange)
+        
+        let rect = rectangles(with: effectiveRange).union
+        
+        attributes[UZTextViewClickedRect] = rect.fromContentCordinateToView(scale: scale, contentInset: contentInset)
+        
+        return attributes
     }
     
     /**

@@ -237,6 +237,9 @@ public protocol UZTextViewDelegate: class {
 }
 
 public class UZTextView: UIView {
+    /// margin for tapping the characters.
+    static let tapMargin = CGFloat(5)
+    
     /// The CTFrame opaque type represents a frame containing multiple lines of text. The frame object is the output resulting from the text-framing process performed by a framesetter object.
     private var ctframe: CTFrame!
     /// The CTFramesetter opaque type is used to generate text frames. That is, CTFramesetter is an object factory for CTFrame objects.
@@ -297,9 +300,7 @@ public class UZTextView: UIView {
         didSet { updateLayout() }
     }
     
-    override public init(frame: CGRect) {
-        super.init(frame: frame)
-        setupGestureRecognizer()
+    private func prepareSubviews() {
         leftCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
         self.addSubview(leftCursor)
         leftCursor.isHidden = true
@@ -309,16 +310,16 @@ public class UZTextView: UIView {
         loupe.textView = self
     }
     
+    override public init(frame: CGRect) {
+        super.init(frame: frame)
+        setupGestureRecognizer()
+        prepareSubviews()
+    }
+    
     required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         setupGestureRecognizer()
-        leftCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
-        self.addSubview(leftCursor)
-        leftCursor.isHidden = true
-        rightCursor.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
-        self.addSubview(rightCursor)
-        rightCursor.isHidden = true
-        loupe.textView = self
+        prepareSubviews()
     }
     
     public override func layoutSubviews() {
@@ -362,10 +363,10 @@ public class UZTextView: UIView {
     private func manageCursorWhenTouchesBegan(at point: CGPoint) {
         let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
         let rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
-        if leftCursorRect.insetBy(dx: -5, dy: -5).contains(point) {
+        if leftCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin).contains(point) {
             cursorStatus = .movingLeftCursor
             longPressGestureRecognizer?.isEnabled = false
-        } else if rightCursorRect.insetBy(dx: -5, dy: -5).contains(point) {
+        } else if rightCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin).contains(point) {
             cursorStatus = .movingRightCursor
             longPressGestureRecognizer?.isEnabled = false
         } else {
@@ -855,11 +856,11 @@ public class UZTextView: UIView {
         switch side {
         case .left:
             rect.size.width = 1
-            rect = rect.insetBy(dx: -5, dy: 0)
+            rect = rect.insetBy(dx: -UZTextView.tapMargin, dy: 0)
         case .right:
             rect.origin.x = rect.origin.x + rect.size.width - 1
             rect.size.width = 1
-            rect = rect.insetBy(dx: -5, dy: 0)
+            rect = rect.insetBy(dx: -UZTextView.tapMargin, dy: 0)
         }
         
         /// convert to view's coordinate

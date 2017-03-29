@@ -11,18 +11,18 @@ import CoreText
 
 extension NSAttributedString {
     /// A range of all string as CFRange.
-    var fullRange: CFRange {
+    fileprivate var fullCFRange: CFRange {
         return CFRange(location: 0, length: self.length)
     }
     /// A range of all string as NSRange.
-    var fullNSRange: NSRange {
+    fileprivate var fullNSRange: NSRange {
         return NSRange(location: 0, length: self.length)
     }
 }
 
 extension CFString {
     /// A range of all string as CFRange.
-    var fullRange: CFRange {
+    fileprivate var fullCFRange: CFRange {
         let length = CFStringGetLength(self)
         return CFRange(location: 0, length: length)
     }
@@ -30,24 +30,24 @@ extension CFString {
 
 extension String {
     /// A range of all string as CFRange.
-    var fullRange: CFRange {
+    fileprivate var fullCFRange: CFRange {
         return CFRange(location: 0, length: self.utf16.count)
     }
 }
 
 extension CFRange {
     /// A range of all string as CFRange.
-    static var zero: CFRange {
+    fileprivate static var zero: CFRange {
         return CFRange(location: 0, length: 0)
     }
     
     /// Range as CountableRange<Int> including an end point.
-    var arangeIncludingEndIndex: CountableRange<Int> {
+    fileprivate var arangeIncludingEndIndex: CountableRange<Int> {
         return self.location..<(self.location + self.length + 1)
     }
     
     /// Range as CountableRange<Int> excluding an end point.
-    var arange: CountableRange<Int> {
+    fileprivate var arange: CountableRange<Int> {
         return self.location..<(self.location + self.length)
     }
     
@@ -55,27 +55,27 @@ extension CFRange {
 
 extension NSRange {
     /// Range as CountableRange<Int> including an end point.
-    var arangeIncludingEndIndex: CountableRange<Int> {
+    fileprivate var arangeIncludingEndIndex: CountableRange<Int> {
         return self.location..<(self.location + self.length + 1)
     }
     
     /// Range as CountableRange<Int> excluding an end point.
-    var arange: CountableRange<Int> {
+    fileprivate var arange: CountableRange<Int> {
         return self.location..<(self.location + self.length)
     }
     
     /// Range means that it does not found anything.
-    static var notFound: NSRange {
+    fileprivate static var notFound: NSRange {
         return NSRange(location: NSNotFound, length: 0)
     }
     
     /// Overload
-    static func == (lhs: NSRange, rhs: NSRange) -> Bool {
+    fileprivate static func == (lhs: NSRange, rhs: NSRange) -> Bool {
         return lhs.location == rhs.location && lhs.length == rhs.length
     }
     
     /// Overload
-    static func != (lhs: NSRange, rhs: NSRange) -> Bool {
+    fileprivate static func != (lhs: NSRange, rhs: NSRange) -> Bool {
         return lhs.location != rhs.location || lhs.length != rhs.length
     }
 }
@@ -157,7 +157,7 @@ fileprivate func CTLineGetTypographicBounds(_ line: CTLine) -> TypographicBounds
 /**
  Property of line.
  */
-struct LineInfo {
+fileprivate struct LineInfo {
     /// CTLine of a line.
     let line: CTLine
     /// Origin of a line.
@@ -195,7 +195,7 @@ fileprivate func CTLineGetStringNSRange(_ line: CTLine) -> NSRange {
  */
 fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
     guard let lines = CTFrameGetLines(frame) as? [CTLine] else { return [] }
-    var lineOrigins = [CGPoint](repeating: CGPoint.zero, count: lines.count)
+    var lineOrigins = [CGPoint](repeating: .zero, count: lines.count)
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), &lineOrigins)
     guard lines.count == lineOrigins.count else { return [] }
     
@@ -238,21 +238,23 @@ public protocol UZTextViewDelegate: class {
 
 public class UZTextView: UIView {
     /// The CTFrame opaque type represents a frame containing multiple lines of text. The frame object is the output resulting from the text-framing process performed by a framesetter object.
-    var ctframe: CTFrame!
+    private var ctframe: CTFrame!
     /// The CTFramesetter opaque type is used to generate text frames. That is, CTFramesetter is an object factory for CTFrame objects.
-    var ctframeSetter: CTFramesetter!
+    private var ctframeSetter: CTFramesetter!
     /// CGSize structure which contains the size of string which will be rendered in the view. This size and ```contentInset``` is the size of the view.
-    var contentSize: CGSize = CGSize.zero
+    private var contentSize: CGSize = .zero
     /// The distance that the string rendering area is inset from the view. This inset and ```contentSize``` is the size of the view.
-    var contentInset: UIEdgeInsets = UIEdgeInsets.zero
+    var contentInset: UIEdgeInsets = .zero {
+        didSet { updateLayout() }
+    }
     
     /// UIGestureRecognizer which detects long press in order to parse words from the string of the view.
-    var longPressGestureRecognizer: UILongPressGestureRecognizer?
+    private var longPressGestureRecognizer: UILongPressGestureRecognizer?
     
     /// NSRange structure which contains the range user currently selects text. If no text is selected, this value is set to NSRange.notFound.
     var selectedRange = NSRange.notFound
     /// NSRange structure which contains the range user currently is tapping link object among the text. If no link object is selected, this value is set to NSRange.notFound.
-    var tappedLinkRange = NSRange.notFound
+    private var tappedLinkRange = NSRange.notFound
     
     var selectedColor: UIColor = UIColor.blue.withAlphaComponent(0.6)
     var highlightedColor: UIColor = UIColor.yellow.withAlphaComponent(0.6)
@@ -270,18 +272,14 @@ public class UZTextView: UIView {
 
     /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {
-        didSet {
-            updateLayout()
-        }
+        didSet { updateLayout() }
     }
     
     /// Scaling parameter of string rendering.
     /// When scale is not one, attributed string is rendered without any warpping.
     /// Scale must be more than zero.
     public var scale: CGFloat = CGFloat(1) {
-        didSet {
-            updateLayout()
-        }
+        didSet { updateLayout() }
     }
     
     /// The text displayed by the label, read only
@@ -292,15 +290,11 @@ public class UZTextView: UIView {
     // MARK: -
     
     override public var frame: CGRect {
-        didSet{
-            updateLayout()
-        }
+        didSet { updateLayout() }
     }
     
     override public var bounds: CGRect {
-        didSet {
-            updateLayout()
-        }
+        didSet { updateLayout() }
     }
     
     override public init(frame: CGRect) {
@@ -375,7 +369,10 @@ public class UZTextView: UIView {
             cursorStatus = .movingRightCursor
             longPressGestureRecognizer?.isEnabled = false
         } else {
-            selectedRange = .notFound
+            let index = characterIndex(at: point)
+            if !(selectedRange.arange ~= index) {
+                selectedRange = .notFound
+            }
         }
     }
     
@@ -508,7 +505,7 @@ public class UZTextView: UIView {
         guard touch.location(in: self) != touch.previousLocation(in: self) else { return }
         
         manageCursorWhenTouchesMoved(at: point)
-        tappedLinkRange = NSRange.notFound
+        tappedLinkRange = .notFound
         setNeedsDisplay()
         updateCursors()
         updateLoupe(touch: touch)
@@ -551,7 +548,7 @@ public class UZTextView: UIView {
             }
         }
         manageCursorWhenTouchesCancelled(at: point)
-        tappedLinkRange = NSRange.notFound
+        tappedLinkRange = .notFound
         setNeedsDisplay()
         updateCursors()
         updateLoupe(touch: touch)
@@ -685,7 +682,7 @@ public class UZTextView: UIView {
      Check whether the user tapped a link or did not. If any link is tapped, callback to the delegate it.
      */
     private func testTappedLinkRange() {
-        if tappedLinkRange != NSRange.notFound {
+        if tappedLinkRange != .notFound {
             for i in tappedLinkRange.arange {
                 var effectiveRange = NSRange.notFound
                 let attribute = attributedString.attributes(at: i, effectiveRange: &effectiveRange)
@@ -695,7 +692,7 @@ public class UZTextView: UIView {
                 }
                 break
             }
-            tappedLinkRange = NSRange.notFound
+            tappedLinkRange = .notFound
         }
     }
     
@@ -704,7 +701,7 @@ public class UZTextView: UIView {
      */
     private func updateTappedLinkRange(at point: CGPoint) {
         let index = characterIndex(at: point)
-        guard index != NSNotFound else { tappedLinkRange = NSRange.notFound; return }
+        guard index != NSNotFound else { tappedLinkRange = .notFound; return }
         if selectedRange.arange ~= index { return }
         var effectiveRange = NSRange.notFound
         let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
@@ -732,9 +729,9 @@ public class UZTextView: UIView {
         }
         
         let frameSetter = CTFramesetterCreateWithAttributedString(attributedString)
-        let frameSize = CTFramesetterSuggestFrameSizeWithConstraints(frameSetter, attributedString.fullRange, nil, contentSize, nil)
+        let frameSize = CTFramesetterSuggestFrameSizeWithConstraints(frameSetter, attributedString.fullCFRange, nil, contentSize, nil)
         contentSize.height = frameSize.height
-        let contentRect = CGRect(origin: CGPoint.zero, size: contentSize)
+        let contentRect = CGRect(origin: .zero, size: contentSize)
         let path = CGPath(rect: contentRect, transform: nil)
         ctframe = CTFramesetterCreateFrame(frameSetter, CFRange.zero, path, nil)
         ctframeSetter = frameSetter
@@ -818,12 +815,12 @@ public class UZTextView: UIView {
      */
     func rangeOfWord(at point: CGPoint) -> NSRange {
         let index = characterIndex(at: point)
-        guard index != NSNotFound else { return NSRange.notFound }
+        guard index != NSNotFound else { return .notFound }
         
         let string = self.attributedString.string as CFString
-        let range: CFRange = string.fullRange
+        let range: CFRange = string.fullCFRange
         guard let tokenizer = CFStringTokenizerCreate(kCFAllocatorDefault, string, range, kCFStringTokenizerUnitWordBoundary, nil)
-            else { return NSRange.notFound }
+            else { return .notFound }
         
         var tokenType = CFStringTokenizerGoToTokenAtIndex(tokenizer, index)
         repeat {
@@ -836,7 +833,7 @@ public class UZTextView: UIView {
             tokenType = CFStringTokenizerAdvanceToNextToken(tokenizer)
         } while tokenType.rawValue != 0
         
-        return NSRange.notFound
+        return .notFound
     }
     
     /// Curosr position
@@ -853,7 +850,7 @@ public class UZTextView: UIView {
     private func rectForCursor(at index: Int, side: CursorEdge) -> CGRect {
         let rects = rectangles(with: NSRange(location: index, length: 1))
         
-        guard var rect = rects.first else { return CGRect.zero }
+        guard var rect = rects.first else { return .zero }
         
         switch side {
         case .left:

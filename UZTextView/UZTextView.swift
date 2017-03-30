@@ -399,17 +399,30 @@ public class UZTextView: UIView {
         case movingRightCursor
     }
     
+    /**
+     Adjust rectangles which to tap cursors.
+     If left cursor and right cursor overlapped, their sizes must be resize in order to avoid it.
+     - parameter leftCursorRect:
+     - parameter rightCursorRect:
+     - returns:
+     */
     private func adjustCursorTappingAreas(leftCursorRect: CGRect , rightCursorRect: CGRect) -> (CGRect, CGRect) {
-        var tleftCursorRect = leftCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin)
-        var trightCursorRect = rightCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin)
+        var tempLeftCursorRect = leftCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin)
+        var tempRightCursorRect = rightCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin)
         
-        let intercect = tleftCursorRect.intersection(trightCursorRect)
+        let intercect = tempLeftCursorRect.intersection(tempRightCursorRect)
         
-        tleftCursorRect.size.width -= intercect.size.width / 2
-        trightCursorRect.origin.x += intercect.size.width / 2
-        trightCursorRect.size.width -= intercect.size.width / 2
+        if intercect.size.height <  tempLeftCursorRect.size.height {
+            tempLeftCursorRect.size.height -= intercect.size.height / 2
+            tempRightCursorRect.origin.y += intercect.size.height / 2
+            tempRightCursorRect.size.height -= intercect.size.height / 2
+        } else {
+            tempLeftCursorRect.size.width -= intercect.size.width / 2
+            tempRightCursorRect.origin.x += intercect.size.width / 2
+            tempRightCursorRect.size.width -= intercect.size.width / 2
+        }
         
-        return (tleftCursorRect, trightCursorRect)
+        return (tempLeftCursorRect, tempRightCursorRect)
     }
     
     /**

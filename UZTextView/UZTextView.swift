@@ -18,12 +18,21 @@ extension Sequence where Iterator.Element == CGRect {
 }
 
 extension CGRect {
-    fileprivate func fromContentCordinateToView(scale: CGFloat, contentInset: UIEdgeInsets) -> CGRect {
+    fileprivate func toViewCoordiante(scale: CGFloat, contentInset: UIEdgeInsets) -> CGRect {
         return CGRect(
             x: self.origin.x * scale + contentInset.left,
             y: self.origin.y * scale + contentInset.top,
             width: self.size.width * scale,
             height: self.size.height * scale
+        )
+    }
+}
+
+extension CGPoint {
+    fileprivate func toTextCoordiante(scale: CGFloat, contentInset: UIEdgeInsets) -> CGPoint {
+        return CGPoint(
+            x: (self.x - contentInset.left) / scale,
+            y: (self.y - contentInset.top) / scale
         )
     }
 }
@@ -107,12 +116,7 @@ extension UITouch {
      - returns: CGPoint structure at which the touch took place with respect to the content insets.
      */
     fileprivate func location(in view: UIView, inset: UIEdgeInsets, scale: CGFloat) -> CGPoint {
-        var point = self.location(in: view)
-        point.x -= inset.left
-        point.y -= inset.top
-        point.x /= scale
-        point.y /= scale
-        return point
+        return self.location(in: view).toTextCoordiante(scale: scale, contentInset: inset)
     }
 }
 
@@ -124,12 +128,7 @@ extension UIGestureRecognizer {
      - returns: CGPoint structure that points a location where UIGestureRecognizer recognizes an event with respect to the content insets.
      */
     fileprivate func location(in view: UIView, inset: UIEdgeInsets, scale: CGFloat) -> CGPoint {
-        var point = self.location(in: view)
-        point.x -= inset.left
-        point.y -= inset.top
-        point.x /= scale
-        point.y /= scale
-        return point
+        return self.location(in: view).toTextCoordiante(scale: scale, contentInset: inset)
     }
     
     fileprivate var stateDescription: String {
@@ -227,7 +226,12 @@ fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
 /**
  The value of this attribute is an CGRect object. The default value of this property is nil, indicating no information about the area.
  */
-public let UZTextViewClickedRect = "UZTextViewClickedRect"
+public let UZTextViewLinkRect = "UZTextViewLinkRect"
+
+/**
+ The value of this attribute is an NSRange ofject.
+ */
+public let UZTextViewLinkRange = "UZTextViewLinkRange"
 
 /**
  The methods of this protocol allow the delegate to manage selecting string, tapping link in the view and long tapping it in the view.
@@ -266,7 +270,7 @@ public protocol UZTextViewDelegate: class {
  */
 public class UZTextView: UIView {
     /// margin for tapping the characters.
-    static let tapMargin = CGFloat(5)
+    static let tapMargin = CGFloat(8)
     
     /// The CTFrame opaque type represents a frame containing multiple lines of text. The frame object is the output resulting from the text-framing process performed by a framesetter object.
     private var ctframe: CTFrame!
@@ -287,9 +291,9 @@ public class UZTextView: UIView {
     /// NSRange structure which contains the range user currently is tapping link object among the text. If no link object is selected, this value is set to NSRange.notFound.
     private var tappedLinkRange = NSRange.notFound
     
-    var selectedColor: UIColor = UIColor.blue.withAlphaComponent(0.6)
-    var highlightedColor: UIColor = UIColor.yellow.withAlphaComponent(0.6)
-    var tappedLinkColor: UIColor = UIColor.lightGray.withAlphaComponent(0.6)
+    private var selectedColor: UIColor = .clear
+    private var tappedLinkColor: UIColor = .clear
+    public var highlightedColor: UIColor = UIColor.yellow.withAlphaComponent(0.6)
     
     /// Delegate of UZTextViewDelegate protocol
     public weak var delegate: UZTextViewDelegate?
@@ -336,6 +340,16 @@ public class UZTextView: UIView {
     }
     
     // MARK: -
+    public override var tintColor: UIColor! {
+        didSet {
+            selectedColor = tintColor.withAlphaComponent(0.2)
+            tappedLinkColor = tintColor.withAlphaComponent(0.2)
+            leftCursor.tintColor = tintColor
+            rightCursor.tintColor = tintColor
+            loupe.tintColor = tintColor
+            setNeedsDisplay()
+        }
+    }
     
     override public var frame: CGRect {
         didSet { updateLayout() }
@@ -374,7 +388,7 @@ public class UZTextView: UIView {
         
         // for debug
 //        drawBoundingBoxesOfAllCharacters(context)
-//        drawCursorHitRects(context)
+        drawCursorHitRects(context)
     }
     
     // MARK: -
@@ -385,17 +399,33 @@ public class UZTextView: UIView {
         case movingRightCursor
     }
     
+    private func adjustCursorTappingAreas(leftCursorRect: CGRect , rightCursorRect: CGRect) -> (CGRect, CGRect) {
+        var tleftCursorRect = leftCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin)
+        var trightCursorRect = rightCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin)
+        
+        let intercect = tleftCursorRect.intersection(trightCursorRect)
+        
+        tleftCursorRect.size.width -= intercect.size.width / 2
+        trightCursorRect.origin.x += intercect.size.width / 2
+        trightCursorRect.size.width -= intercect.size.width / 2
+        
+        return (tleftCursorRect, trightCursorRect)
+    }
+    
     /**
      Control cursor to select string in the view.
      - parameter point: CGPoint structure which contains the location at which user is tapping.
      */
     private func manageCursorWhenTouchesBegan(at point: CGPoint) {
-        let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
-        let rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
-        if leftCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin).contains(point) {
+        var leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
+        var rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
+        
+        (leftCursorRect, rightCursorRect) = adjustCursorTappingAreas(leftCursorRect: leftCursorRect, rightCursorRect: rightCursorRect)
+        
+        if leftCursorRect.contains(point) {
             cursorStatus = .movingLeftCursor
             longPressGestureRecognizer?.isEnabled = false
-        } else if rightCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin).contains(point) {
+        } else if rightCursorRect.contains(point) {
             cursorStatus = .movingRightCursor
             longPressGestureRecognizer?.isEnabled = false
         } else {
@@ -476,6 +506,7 @@ public class UZTextView: UIView {
     
     public override func selectAll(_ sender: Any?) {
         selectedRange = NSRange(location: 0, length: self.string.utf16.count)
+        updateCursors()
         setNeedsDisplay()
     }
     
@@ -633,10 +664,12 @@ public class UZTextView: UIView {
      - parameter context: The current graphics context.
      */
     private func drawCursorHitRects(_ context: CGContext) {
-        UIColor.black.withAlphaComponent(0.5).setFill()
-        let leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
-        let rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
+        var leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
+        var rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
+        (leftCursorRect, rightCursorRect) = adjustCursorTappingAreas(leftCursorRect: leftCursorRect, rightCursorRect: rightCursorRect)
+        UIColor.red.withAlphaComponent(0.5).setFill()
         context.fill(leftCursorRect)
+        UIColor.green.withAlphaComponent(0.5).setFill()
         context.fill(rightCursorRect)
     }
     
@@ -689,14 +722,14 @@ public class UZTextView: UIView {
             do {
                 let rects = rectangles(with: NSRange(location: selectedRange.location, length: 1))
                 guard var rect = rects.first else { return }
-                rect = rect.fromContentCordinateToView(scale: scale, contentInset: contentInset)
+                rect = rect.toViewCoordiante(scale: scale, contentInset: contentInset)
                 leftCursor.updateLocation(in: rect)
                 leftCursor.isHidden = false
             }
             do {
                 let rects = rectangles(with: NSRange(location: selectedRange.location + selectedRange.length - 1, length: 1))
                 guard var rect = rects.first else { return }
-                rect = rect.fromContentCordinateToView(scale: scale, contentInset: contentInset)
+                rect = rect.toViewCoordiante(scale: scale, contentInset: contentInset)
                 rightCursor.updateLocation(in: rect)
                 rightCursor.isHidden = false
             }
@@ -795,10 +828,10 @@ public class UZTextView: UIView {
             let index = characterIndex(at: point)
             var effectiveRange = NSRange.notFound
             if index != NSNotFound {
-                let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
-                if let link = attribute[NSLinkAttributeName] {
-                    print(link)
+                var attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
+                if let _ = attribute[NSLinkAttributeName] {
                     if let delegate = delegate {
+                        attribute[UZTextViewLinkRange] = effectiveRange
                         delegate.textView(self, didLongTapLinkAttribute: attribute)
                     }
                 } else {
@@ -831,6 +864,12 @@ public class UZTextView: UIView {
         self.addSubview(rightCursor)
         rightCursor.isHidden = true
         loupe.textView = self
+        
+        selectedColor = tintColor.withAlphaComponent(0.2)
+        tappedLinkColor = tintColor.withAlphaComponent(0.2)
+        leftCursor.tintColor = tintColor
+        rightCursor.tintColor = tintColor
+        loupe.tintColor = tintColor
     }
     
     /**
@@ -861,7 +900,7 @@ public class UZTextView: UIView {
     private func showUIMenuForSelectedString() {
         let targetRect = rectangles(with: selectedRange)
             .map({
-                CGRect(x: $0.origin.x / scale - contentInset.left, y: $0.origin.y / scale - contentInset.top, width: $0.size.width / scale, height: $0.size.height / scale)
+                $0.toViewCoordiante(scale: scale, contentInset: contentInset)
             })
             .reduce(CGRect.null, { (result, rect) -> CGRect in
                 return rect.union(result)
@@ -878,16 +917,13 @@ public class UZTextView: UIView {
      - returns: The attributes for the character at where user tapped.
      */
     public func attributes(at point: CGPoint) -> [String: Any]? {
-        let pointForText = CGPoint(x: (point.x - contentInset.left) / scale, y: (point.y - contentInset.top) / scale)
+        let pointForText = point.toTextCoordiante(scale: scale, contentInset: contentInset)
         let index = characterIndex(at: pointForText)
         guard index != NSNotFound else { return nil }
         var effectiveRange = NSRange.notFound
         var attributes = attributedString.attributes(at: index, effectiveRange: &effectiveRange)
-        
         let rect = rectangles(with: effectiveRange).union
-        
-        attributes[UZTextViewClickedRect] = rect.fromContentCordinateToView(scale: scale, contentInset: contentInset)
-        
+        attributes[UZTextViewLinkRect] = rect.toViewCoordiante(scale: scale, contentInset: contentInset)
         return attributes
     }
     

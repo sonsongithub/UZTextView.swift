@@ -26,6 +26,7 @@ class AAViewController: UIViewController, UIViewControllerPreviewingDelegate {
         let ratio = textView.frame.size.width / size.width
         print(ratio)
         textView.scale = ratio
+        textView.tintColor = .red
         
         self.registerForPreviewing(with: self, sourceView: self.view)
     }
@@ -36,7 +37,7 @@ class AAViewController: UIViewController, UIViewControllerPreviewingDelegate {
         let locationInTextView = self.view.convert(location, to: textView)
         
         if let attributes = textView.attributes(at: locationInTextView) {
-            if let url = attributes[NSLinkAttributeName] as? URL, let rect = attributes[UZTextViewClickedRect] as? CGRect {
+            if let url = attributes[NSLinkAttributeName] as? URL, let rect = attributes[UZTextViewLinkRect] as? CGRect {
                 print(url)
                 previewingContext.sourceRect = self.view.convert(rect, from: textView)
                 let controller = WebViewController(nibName: nil, bundle: nil)

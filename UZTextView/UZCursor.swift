@@ -33,6 +33,12 @@ internal class UZCursor: UIView {
         backgroundColor = UIColor.clear
     }
     
+    public override var tintColor: UIColor! {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
     /// Static width of this view.
     private static var width = CGFloat(15)
     /// Extended height of pole of the cursor.

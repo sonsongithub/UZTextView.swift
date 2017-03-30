@@ -32,6 +32,12 @@ internal class UZLoupe: UIView, CAAnimationDelegate {
         }
     }
     
+    public override var tintColor: UIColor! {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         guard let textView = textView else { return }

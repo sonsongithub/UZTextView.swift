@@ -26,7 +26,6 @@ class TableViewController: UITableViewController, UZTextViewDelegate {
             attr.addAttribute(NSFontAttributeName,
                               value: UIFont.systemFont(ofSize: 20),
                               range: NSRange(location: 0, length: attr.length))
-            
             attributedString = attr
             
             let size = UZTextView.size(of: attributedString, restrictedWithin: self.view.frame.size.width - 16)

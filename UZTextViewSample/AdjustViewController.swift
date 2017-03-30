@@ -60,5 +60,12 @@ class AdjustViewController: UIViewController {
         } catch {
             print(error)
         }
+        
+        let bar = UIBarButtonItem(title: "Debug", style: .plain, target: self, action: #selector(AdjustViewController.toggle(sender:)))
+        self.navigationItem.rightBarButtonItem = bar
+    }
+    
+    func toggle(sender: Any) {
+        textView.isDebugMode = !textView.isDebugMode
     }
 }

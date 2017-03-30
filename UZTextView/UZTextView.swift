@@ -307,6 +307,13 @@ public class UZTextView: UIView {
     private let rightCursor = UZCursor.createRightCursor()
     /// The loupe for selecting text in the view.
     private let loupe = UZLoupe()
+    
+    /// debug flag
+    public var isDebugMode = false {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
 
     /// The styled text displayed by the view
     public var attributedString: NSAttributedString = NSAttributedString(string: "") {
@@ -387,8 +394,10 @@ public class UZTextView: UIView {
         drawStrikeThroughLine(context)
         
         // for debug
-//        drawBoundingBoxesOfAllCharacters(context)
-        drawCursorHitRects(context)
+        if isDebugMode {
+            drawBoundingBoxesOfAllCharacters(context)
+            drawCursorHitRects(context)
+        }
     }
     
     // MARK: -
@@ -677,13 +686,15 @@ public class UZTextView: UIView {
      - parameter context: The current graphics context.
      */
     private func drawCursorHitRects(_ context: CGContext) {
-        var leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
-        var rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
-        (leftCursorRect, rightCursorRect) = adjustCursorTappingAreas(leftCursorRect: leftCursorRect, rightCursorRect: rightCursorRect)
-        UIColor.red.withAlphaComponent(0.5).setFill()
-        context.fill(leftCursorRect)
-        UIColor.green.withAlphaComponent(0.5).setFill()
-        context.fill(rightCursorRect)
+        if selectedRange.length > 0 {
+            var leftCursorRect = rectForCursor(at: selectedRange.location, side: .left)
+            var rightCursorRect = rectForCursor(at: selectedRange.location + selectedRange.length - 1, side: .right)
+            (leftCursorRect, rightCursorRect) = adjustCursorTappingAreas(leftCursorRect: leftCursorRect, rightCursorRect: rightCursorRect)
+            UIColor.red.withAlphaComponent(0.5).setFill()
+            context.fill(leftCursorRect)
+            UIColor.green.withAlphaComponent(0.5).setFill()
+            context.fill(rightCursorRect)
+        }
     }
     
     // MARK: -

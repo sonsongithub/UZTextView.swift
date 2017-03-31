@@ -14,20 +14,32 @@ class WebViewController: UIViewController {
     
     override var previewActionItems: [UIPreviewActionItem] {
         get {
-            func previewActionForTitle(_ title: String, style: UIPreviewActionStyle = .default) -> UIPreviewAction {
-                return UIPreviewAction(title: title, style: style) { previewAction, viewController in
-                    print(title)
+            let action1 = {
+                return UIPreviewAction(title: "Copy", style: .default) { previewAction, viewController in
+                    print("copy")
                 }
-            }
+            }()
+            let action2 = {
+                return UIPreviewAction(title: "Open", style: .default) { previewAction, viewController in
+                    let controller = WebViewController(nibName: nil, bundle: nil)
+                    let nav = UINavigationController(rootViewController: controller)
+                    controller.url = self.url
+                    self.present(nav, animated: true, completion: nil)
+                }
+            }()
+            let action3 = {
+                return UIPreviewAction(title: "Open in Safari", style: .default) { previewAction, viewController in
+                    if let url = self.url {
+                        UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                    }
+                }
+            }()
+            let action4 = {
+                return UIPreviewAction(title: "Cancel", style: .destructive) { previewAction, viewController in
+                }
+            }()
             
-            let action1 = previewActionForTitle("Action1")
-            let action2 = previewActionForTitle("Destructive Action", style: .destructive)
-            
-            let subAction1 = previewActionForTitle("Sub1")
-            let subAction2 = previewActionForTitle("Sub2")
-            let groupedActions = UIPreviewActionGroup(title: "Sub Actions", style: .default, actions: [subAction1, subAction2] )
-            
-            return [action1, action2, groupedActions]
+            return [action1, action2, action3, action4]
         }
     }
     

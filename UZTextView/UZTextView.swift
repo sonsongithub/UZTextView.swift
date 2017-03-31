@@ -10,7 +10,7 @@ import UIKit
 import CoreText
 
 extension Sequence where Iterator.Element == CGRect {
-    var union: CGRect {
+    fileprivate var union: CGRect {
         return reduce(CGRect.null, { (result, rect) -> CGRect in
             return result.union(rect)
         })
@@ -33,6 +33,12 @@ extension CGPoint {
         return CGPoint(
             x: (self.x - contentInset.left) / scale,
             y: (self.y - contentInset.top) / scale
+        )
+    }
+    internal func offsetBy(x: CGFloat, y: CGFloat) -> CGPoint {
+        return CGPoint(
+            x: self.x + x,
+            y: self.y + y
         )
     }
 }
@@ -61,6 +67,11 @@ extension String {
     fileprivate var fullCFRange: CFRange {
         return CFRange(location: 0, length: self.utf16.count)
     }
+    
+    /// A range of all string as NSRange.
+    fileprivate var fullNSRange: NSRange {
+        return NSRange(location: 0, length: self.utf16.count)
+    }
 }
 
 extension CFRange {
@@ -79,6 +90,10 @@ extension CFRange {
         return self.location..<(self.location + self.length)
     }
     
+    /// Convert to NSRange structure.
+    fileprivate var nsrange: NSRange {
+        return NSRange(location: self.location, length: self.length)
+    }
 }
 
 extension NSRange {
@@ -190,7 +205,7 @@ fileprivate struct LineInfo {
     func getRect(contentSize: CGSize) -> CGRect {
         let typographicBounds = CTLineGetTypographicBounds(self.line)
         let lineRectSize = CGSize(width: typographicBounds.width, height: typographicBounds.ascent + typographicBounds.descent)
-        let lineRectOrigin = CGPoint(x: origin.x, y: origin.y - typographicBounds.descent)
+        let lineRectOrigin = origin.offsetBy(x: 0, y: -typographicBounds.descent)
         let lineRectInverted = CGRect(origin: lineRectOrigin, size: lineRectSize)
         return CGRect(origin: CGPoint(x: lineRectOrigin.x, y: contentSize.height - lineRectInverted.maxY), size: lineRectSize)
     }
@@ -291,9 +306,11 @@ public class UZTextView: UIView {
     /// NSRange structure which contains the range user currently is tapping link object among the text. If no link object is selected, this value is set to NSRange.notFound.
     private var tappedLinkRange = NSRange.notFound
     
+    ///
     private var selectedColor: UIColor = .clear
+    
+    ///
     private var tappedLinkColor: UIColor = .clear
-    public var highlightedColor: UIColor = UIColor.yellow.withAlphaComponent(0.6)
     
     /// Delegate of UZTextViewDelegate protocol
     public weak var delegate: UZTextViewDelegate?
@@ -310,9 +327,7 @@ public class UZTextView: UIView {
     
     /// debug flag
     public var isDebugMode = false {
-        didSet {
-            setNeedsDisplay()
-        }
+        didSet { setNeedsDisplay() }
     }
 
     /// The styled text displayed by the view
@@ -347,6 +362,7 @@ public class UZTextView: UIView {
     }
     
     // MARK: -
+    
     public override var tintColor: UIColor! {
         didSet {
             selectedColor = tintColor.withAlphaComponent(0.2)
@@ -527,7 +543,7 @@ public class UZTextView: UIView {
     }
     
     public override func selectAll(_ sender: Any?) {
-        selectedRange = NSRange(location: 0, length: self.string.utf16.count)
+        selectedRange = self.string.fullNSRange
         updateCursors()
         setNeedsDisplay()
     }
@@ -554,7 +570,7 @@ public class UZTextView: UIView {
         setNeedsDisplay()
         updateCursors()
         if cursorStatus != .none {
-            loupe.setVisible(visible: true)
+            loupe.isHidden = false
             if let delegate = delegate {
                 delegate.selectingStringBegun(self)
             }
@@ -604,7 +620,7 @@ public class UZTextView: UIView {
         setNeedsDisplay()
         updateCursors()
         updateLoupe(touch: touch)
-        loupe.setVisible(visible: false)
+        loupe.isHidden = true
     }
     
     // MARK: -
@@ -620,6 +636,16 @@ public class UZTextView: UIView {
         context.textMatrix = CGAffineTransform.identity
         CTFrameDraw(ctframe, context)
         context.restoreGState()
+    }
+    
+    private func drawBackgroundColor(_ context: CGContext) {
+        attributedString.enumerateAttribute(NSBackgroundColorAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, stop) in
+            guard let color = value as? UIColor else { return }
+            color.setFill()
+            rectangles(with: range).forEach({
+                context.fill($0)
+            })
+        }
     }
     
     /**
@@ -721,14 +747,14 @@ public class UZTextView: UIView {
     public func updateLoupe(gestureRecognizer: UIGestureRecognizer) {
         switch gestureRecognizer.state {
         case .began:
-            loupe.setVisible(visible: true)
+            loupe.isHidden = false
             loupe.move(to: gestureRecognizer.location(in: self))
         case .changed:
             loupe.move(to: gestureRecognizer.location(in: self))
         case .cancelled:
             loupe.move(to: gestureRecognizer.location(in: self))
         case .ended:
-            loupe.setVisible(visible: false)
+            loupe.isHidden = true
             loupe.move(to: gestureRecognizer.location(in: self))
         default:
             do {}
@@ -817,7 +843,7 @@ public class UZTextView: UIView {
         
         leftCursor.isHidden = true
         rightCursor.isHidden = true
-        loupe.setVisible(visible: false)
+        loupe.isHidden = true
         
         let frameSetter = CTFramesetterCreateWithAttributedString(attributedString)
         let frameSize = CTFramesetterSuggestFrameSizeWithConstraints(frameSetter, attributedString.fullCFRange, nil, contentSize, nil)
@@ -971,7 +997,7 @@ public class UZTextView: UIView {
             let range = CFStringTokenizerGetCurrentTokenRange(tokenizer)
             
             if range.arange ~= index {
-                return NSRange(location: range.location, length: range.length)
+                return range.nsrange
             }
             
             tokenType = CFStringTokenizerAdvanceToNextToken(tokenizer)

@@ -638,6 +638,16 @@ public class UZTextView: UIView {
         context.restoreGState()
     }
     
+    private func drawBackgroundColor(_ context: CGContext) {
+        attributedString.enumerateAttribute(NSBackgroundColorAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, stop) in
+            guard let color = value as? UIColor else { return }
+            color.setFill()
+            rectangles(with: range).forEach({
+                context.fill($0)
+            })
+        }
+    }
+    
     /**
      Draw the background rectangles behind the selected characters.
      - parameter context: The current graphics context.

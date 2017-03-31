@@ -11,33 +11,48 @@ import UZTextView
 
 class AAViewController: UIViewController, UIViewControllerPreviewingDelegate {
     @IBOutlet var textView: UZTextView!
-    let aa = "　　　　, -.―――--.､\n　　 ,ｲ,,i､ﾘ,,リ,,ﾉﾉ,,;;;;;;;;ヽ\n　　.i;}'　　　　　　　\"ﾐ;;;;:}\n　　|} ,,..､_､　 , _,,,..､ 　|;;;:|\n　　|} ,_tｭ,〈 　ﾋ''tｭ_　 i;;;;|\n　　|　 ｰ'　|　｀ - 　 　 ﾄ'{\n　.｢|　　 ｲ_i _ >､ 　 　 }〉}\n　｀{|　_.ﾉ;;/;;/,ゞ;ヽ､ 　.!-'\n　　 |　　 　＝'\" 　 　 |\n　 　 iﾞ ､_　　ﾞ,,,　 ,,　' {\n　　丿＼　￣￣　 _,,-\"ヽ\n''\"~ヽ　　＼､_;;,..-\" ＿　,i`ー-\n　　 ヽ､oヽ/ ＼　 /o/　 |\n\n\n\n http://sonson.jp"
+    let aa = "<font face=\"Mona\">　　　　, -.―――--.､<br/>　　 ,ｲ,,i､ﾘ,,リ,,ﾉﾉ,,;;;;;;;;ヽ<br/>　　.i;}'　　　　　　　\"ﾐ;;;;:}<br/>　　|} ,,..､_､　 , _,,,..､ 　|;;;:|<br/>　　|} ,_tｭ,〈 　ﾋ''tｭ_　 i;;;;|<br/>　　|　 ｰ'　|　｀ - 　 　 ﾄ'{<br/>　.｢|　　 ｲ_i _ >､ 　 　 }〉}<br/>　｀{|　_.ﾉ;;/;;/,ゞ;ヽ､ 　.!-'<br/>　　 |　　 　＝'\" 　 　 |<br/>　 　 iﾞ ､_　　ﾞ,,,　 ,,　' {<br/>　　丿＼　￣￣　 _,,-\"ヽ<br/>''\"~ヽ　　＼､_;;,..-\" ＿　,i`ー-<br/>　　 ヽ､oヽ/ ＼　 /o/　 |<br/><br/><br/><br/><a href=\"http://sonson.jp\">http://sonson.jp</a></font>"
     
-    let aa2 = "　　　　　　　　  　 　 　 　 __|__　　　　　-┼-\n　 　　　　　　 七_　 　 　  ,-|ナ、 　 　,.-┼ト、\n　　　あ　　　 (乂 ）　　　 し'ヽ ノ　　　ヽ__ レノ\n　小←──────────────────────→大\n\n　薄\n　↑米米米米米米米 : : : : : : : : : : : : : : :\n　｜髟髟髟髟髟髟髟 :..:..:..:..:..:..:.:..:..:..:..:.:..:\n　｜面面面面面面面 :.:.:.:.:.:.:.:.:.:.::.:.:.:.:.:.:.:.:\n　｜鼎鼎鼎鼎鼎鼎鼎 :.::.::.::.::.::.::.::.::.::.::.::.:::\n　｜蠻蠻蠻蠻蠻蠻蠻 ::::::::::::::::::::::::::::::::::::::\n　｜鬣鬣鬣鬣鬣鬣鬣 ::::::::::::::::::::::::::::::::::::::\n　｜麌麌麌麌麌麌麌 ;:;::;::;::;::;::;::;::;::;::;::;::;::\n　｜黌黌黌黌黌黌黌 :;:;:;:;:;:;:;:;:;:;::;:;:;:;:;:;:;:;:\n　｜鬱鬱鬱鬱鬱鬱鬱 ;;:;;:;;:;;:;;:;;:;;:;;:;;:;;:;;:;;:;;\n　↓䨻䨻䨻䨻䨻䨻䨻 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n　濃"
-
+    let aa2 = "<font face=\"Mona\">　　　　　　　　  　 　 　 　 __|__　　　　　-┼-<br/>　 　　　　　　 七_　 　 　  ,-|ナ、 　 　,.-┼ト、<br/>　　　あ　　　 (乂 ）　　　 し'ヽ ノ　　　ヽ__ レノ<br/>　小←──────────────────────→大<br/><br/>　薄<br/>　↑米米米米米米米 : : : : : : : : : : : : : : :<br/>　｜髟髟髟髟髟髟髟 :..:..:..:..:..:..:.:..:..:..:..:.:..:<br/>　｜面面面面面面面 :.:.:.:.:.:.:.:.:.:.::.:.:.:.:.:.:.:.:<br/>　｜鼎鼎鼎鼎鼎鼎鼎 :.::.::.::.::.::.::.::.::.::.::.::.:::<br/>　｜蠻蠻蠻蠻蠻蠻蠻 ::::::::::::::::::::::::::::::::::::::<br/>　｜鬣鬣鬣鬣鬣鬣鬣 ::::::::::::::::::::::::::::::::::::::<br/>　｜麌麌麌麌麌麌麌 ;:;::;::;::;::;::;::;::;::;::;::;::;::<br/>　｜黌黌黌黌黌黌黌 :;:;:;:;:;:;:;:;:;:;::;:;:;:;:;:;:;:;:<br/>　｜鬱鬱鬱鬱鬱鬱鬱 ;;:;;:;;:;;:;;:;;:;;:;;:;;:;;:;;:;;:;;<br/>　↓䨻䨻䨻䨻䨻䨻䨻 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;<br/>　濃</font>"
     override func viewDidLoad() {
+
         super.viewDidLoad()
-        let attr = NSMutableAttributedString(string: aa2)
-        let font = UIFont(name: "Mona", size: 20)!
-        attr.addAttribute(
-            NSFontAttributeName,
-            value: font,
-            range: NSRange(location: 0, length: attr.string.utf16.count)
-        )
-        textView.attributedString = attr
+//        let attr = NSMutableAttributedString(string: aa2)
+        do {
+            guard let data = aa2.data(using: .utf8) else { return }
+            let options: [String: Any] = [
+                NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType,
+                NSCharacterEncodingDocumentAttribute: String.Encoding.utf8.rawValue
+            ]
+            let attr = try NSMutableAttributedString(data: data, options: options, documentAttributes: nil)
+            textView.attributedString = attr
+            
+            //        attr.addAttributes(
+            //            [NSLinkAttributeName:URL(string: "http://sonson.jp")!],
+            //            range: NSRange(location: attr.string.utf16.count - 16, length: 16)
+            //        )
+            
+            let size = UZTextView.size(of: attr, restrictedWithin: textView.frame.size.width)
+            let ratio = textView.frame.size.width / size.width
+            print(ratio)
+            textView.scale = ratio
+            textView.tintColor = .red
+            
+            self.registerForPreviewing(with: self, sourceView: self.view)
+        } catch {
+            print("\(error)")
+        }
+//        let attr = NSMutableAttributedString(
         
-//        attr.addAttributes(
-//            [NSLinkAttributeName:URL(string: "http://sonson.jp")!],
-//            range: NSRange(location: attr.string.utf16.count - 16, length: 16)
+//        let font = UIFont(name: "mona", size: 20)!
+//        attr.addAttribute(
+//            NSFontAttributeName,
+//            value: font,
+//            range: NSRange(location: 0, length: attr.string.utf16.count)
 //        )
         
-        let size = UZTextView.size(of: attr, restrictedWithin: textView.frame.size.width)
-        let ratio = textView.frame.size.width / size.width
-        print(ratio)
-        textView.scale = ratio
-        textView.tintColor = .red
         
-        self.registerForPreviewing(with: self, sourceView: self.view)
+        
     }
     
     func previewingContext(_ previewingContext: UIViewControllerPreviewing,

@@ -431,7 +431,7 @@ public class UZTextView: UIView {
      - parameter rightCursorRect:
      - returns:
      */
-    private func adjustCursorTappingAreas(leftCursorRect: CGRect , rightCursorRect: CGRect) -> (CGRect, CGRect) {
+    private func adjustCursorTappingAreas(leftCursorRect: CGRect, rightCursorRect: CGRect) -> (CGRect, CGRect) {
         var tempLeftCursorRect = leftCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin)
         var tempRightCursorRect = rightCursorRect.insetBy(dx: -UZTextView.tapMargin, dy: -UZTextView.tapMargin)
         
@@ -639,7 +639,7 @@ public class UZTextView: UIView {
     }
     
     private func drawBackgroundColor(_ context: CGContext) {
-        attributedString.enumerateAttribute(NSBackgroundColorAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, stop) in
+        attributedString.enumerateAttribute(NSBackgroundColorAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, _) in
             guard let color = value as? UIColor else { return }
             color.setFill()
             rectangles(with: range).forEach({
@@ -675,7 +675,7 @@ public class UZTextView: UIView {
      - parameter context: The current graphics context.
      */
     private func drawStrikeThroughLine(_ context: CGContext) {
-        attributedString.enumerateAttribute(NSStrikethroughStyleAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, stop) in
+        attributedString.enumerateAttribute(NSStrikethroughStyleAttributeName, in: attributedString.fullNSRange, options: []) { (value, range, _) in
             guard let width = value as? CGFloat else { return }
             rectangles(with: range).forEach({
                 context.setLineWidth(width)
@@ -797,7 +797,7 @@ public class UZTextView: UIView {
             for i in tappedLinkRange.arange {
                 var effectiveRange = NSRange.notFound
                 let attribute = attributedString.attributes(at: i, effectiveRange: &effectiveRange)
-                guard let _ = attribute[NSLinkAttributeName] else { continue }
+                guard attribute[NSLinkAttributeName] != nil else { continue }
                 if let delegate = delegate {
                     delegate.textView(self, didClickLinkAttribute: attribute)
                 }
@@ -816,7 +816,7 @@ public class UZTextView: UIView {
         if selectedRange.arange ~= index { return }
         var effectiveRange = NSRange.notFound
         let attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
-        guard let _ = attribute[NSLinkAttributeName] else { tappedLinkRange = .notFound; return }
+        guard attribute[NSLinkAttributeName] != nil else { tappedLinkRange = .notFound; return }
         tappedLinkRange = effectiveRange
     }
     
@@ -879,7 +879,7 @@ public class UZTextView: UIView {
             var effectiveRange = NSRange.notFound
             if index != NSNotFound {
                 var attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
-                if let _ = attribute[NSLinkAttributeName] {
+                if attribute[NSLinkAttributeName] != nil {
                     if let delegate = delegate {
                         attribute[UZTextViewLinkRange] = effectiveRange
                         delegate.textView(self, didLongTapLinkAttribute: attribute)
@@ -1027,7 +1027,7 @@ public class UZTextView: UIView {
             rect.size.width = 1
             rect = rect.insetBy(dx: -UZTextView.tapMargin, dy: 0)
         case .right:
-            rect.origin.x = rect.origin.x + rect.size.width - 1
+            rect.origin.x += (rect.size.width - 1)
             rect.size.width = 1
             rect = rect.insetBy(dx: -UZTextView.tapMargin, dy: 0)
         }
@@ -1043,15 +1043,17 @@ public class UZTextView: UIView {
         return rect
     }
   
+    /// Error object to leave forEach loop.
+    enum CharacterIndex: Error {
+        case find(index: Int)
+    }
+    
     /**
      Returns index of the character user tapped in the view.
      - parameter point: A CGPoint structure which contains a location at which user tapped.
      - returns: Index of the character user tapped, or if the function fails for any reason, NSNotFound.
      */
     private func characterIndex(at point: CGPoint) -> Int {
-        enum CharacterIndex: Error {
-            case find(index: Int)
-        }
         do {
             try CTFrameGetLineInfo(ctframe).forEach({ (lineInfo) in
                 let lineRange = lineInfo.range

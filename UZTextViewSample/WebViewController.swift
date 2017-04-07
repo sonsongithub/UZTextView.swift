@@ -13,34 +13,32 @@ class WebViewController: UIViewController {
     let webView = WKWebView(frame: CGRect.zero)
     
     override var previewActionItems: [UIPreviewActionItem] {
-        get {
-            let action1 = {
-                return UIPreviewAction(title: "Copy", style: .default) { previewAction, viewController in
-                    print("copy")
+        let action1 = {
+            return UIPreviewAction(title: "Copy", style: .default) { _, _ in
+                print("copy")
+            }
+        }()
+        let action2 = {
+            return UIPreviewAction(title: "Open", style: .default) { _, _ in
+                let controller = WebViewController(nibName: nil, bundle: nil)
+                let nav = UINavigationController(rootViewController: controller)
+                controller.url = self.url
+                self.present(nav, animated: true, completion: nil)
+            }
+        }()
+        let action3 = {
+            return UIPreviewAction(title: "Open in Safari", style: .default) { _, _ in
+                if let url = self.url {
+                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
                 }
-            }()
-            let action2 = {
-                return UIPreviewAction(title: "Open", style: .default) { previewAction, viewController in
-                    let controller = WebViewController(nibName: nil, bundle: nil)
-                    let nav = UINavigationController(rootViewController: controller)
-                    controller.url = self.url
-                    self.present(nav, animated: true, completion: nil)
-                }
-            }()
-            let action3 = {
-                return UIPreviewAction(title: "Open in Safari", style: .default) { previewAction, viewController in
-                    if let url = self.url {
-                        UIApplication.shared.open(url, options: [:], completionHandler: nil)
-                    }
-                }
-            }()
-            let action4 = {
-                return UIPreviewAction(title: "Cancel", style: .destructive) { previewAction, viewController in
-                }
-            }()
-            
-            return [action1, action2, action3, action4]
-        }
+            }
+        }()
+        let action4 = {
+            return UIPreviewAction(title: "Cancel", style: .destructive) { _, _ in
+            }
+        }()
+        
+        return [action1, action2, action3, action4]
     }
     
     override func viewDidLoad() {

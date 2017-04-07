@@ -111,7 +111,7 @@ internal class UZCursor: UIView {
             self.frame = rect
         case .down:
             var rect = charcaterRect
-            rect.origin.x = rect.origin.x + rect.size.width - UZCursor.width * 0.5
+            rect.origin.x += (rect.size.width - UZCursor.width * 0.5)
             rect.size.width = UZCursor.width
             rect.size.height += UZCursor.extendHeight
             self.frame = rect

@@ -67,7 +67,7 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
         let attributes: [[String: Any]] = cells.flatMap({
                 let locationInTextView = self.view.convert(location, to: $0.textView)
             guard var attributes = $0.textView.attributes(at: locationInTextView) else { return nil }
-                if let _ = attributes[NSLinkAttributeName] as? URL, let rect = attributes[UZTextViewLinkRect] as? CGRect {
+                if attributes[NSLinkAttributeName] as? URL != nil, let rect = attributes[UZTextViewLinkRect] as? CGRect {
                     attributes["rect"] = previewingContext.sourceView.convert(rect, from: $0.textView)
                     return attributes
                 } else {
@@ -105,13 +105,13 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
         if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] as? URL {
             let sheet = UIAlertController(title: "Link", message: link.absoluteString, preferredStyle: .actionSheet)
             do {
-                let action = UIAlertAction(title: "Copy", style: .default) { (action) in
+                let action = UIAlertAction(title: "Copy", style: .default) { (_) in
                     print("copy")
                 }
                 sheet.addAction(action)
             }
             do {
-                let action = UIAlertAction(title: "Open", style: .default) { (action) in
+                let action = UIAlertAction(title: "Open", style: .default) { (_) in
                     let controller = WebViewController(nibName: nil, bundle: nil)
                     let nav = UINavigationController(rootViewController: controller)
                     controller.url = link
@@ -120,13 +120,13 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
                 sheet.addAction(action)
             }
             do {
-                let action = UIAlertAction(title: "Open in Safari", style: .default) { (action) in
+                let action = UIAlertAction(title: "Open in Safari", style: .default) { (_) in
                     UIApplication.shared.open(link, options: [:], completionHandler: nil)
                 }
                 sheet.addAction(action)
             }
             do {
-                let action = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
+                let action = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
                 }
                 sheet.addAction(action)
             }

@@ -152,6 +152,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 14D75D481E84DB9E006EC27F /* Build configuration list for PBXNativeTarget "UZTextView" */;
 			buildPhases = (
+				144A55281E97811600665466 /* swiftlint */,
 				14D75D3B1E84DB9E006EC27F /* Sources */,
 				14D75D3C1E84DB9E006EC27F /* Frameworks */,
 				14D75D3D1E84DB9E006EC27F /* Headers */,
@@ -170,6 +171,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 14D75D601E84DCEC006EC27F /* Build configuration list for PBXNativeTarget "UZTextViewSample" */;
 			buildPhases = (
+				144A55291E97812300665466 /* swiftlint */,
 				14D75D4D1E84DCEC006EC27F /* Sources */,
 				14D75D4E1E84DCEC006EC27F /* Frameworks */,
 				14D75D4F1E84DCEC006EC27F /* Resources */,
@@ -248,6 +250,37 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		144A55281E97811600665466 /* swiftlint */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = swiftlint;
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if which swiftlint >/dev/null; then\necho \"SwiftLint\"\nswiftlint\nelse\necho \"SwiftLint does not exist, download from https://github.com/realm/SwiftLint\"\nfi\n";
+		};
+		144A55291E97812300665466 /* swiftlint */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = swiftlint;
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if which swiftlint >/dev/null; then\necho \"SwiftLint\"\nswiftlint\nelse\necho \"SwiftLint does not exist, download from https://github.com/realm/SwiftLint\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		14D75D3B1E84DB9E006EC27F /* Sources */ = {

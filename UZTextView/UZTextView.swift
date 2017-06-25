@@ -325,6 +325,11 @@ public class UZTextView: UIView {
     /// The loupe for selecting text in the view.
     private let loupe = UZLoupe()
     
+    
+    deinit {
+        loupe.removeFromSuperview()
+    }
+    
     /// debug flag
     public var isDebugMode = false {
         didSet { setNeedsDisplay() }

@@ -31,6 +31,11 @@ internal class UZLoupe: UIView {
     /// UZTextView to which the loupe is attached.
     internal weak var textView: UZTextView?
     
+    deinit {
+        if UZTextView.checkMemoryLeak {
+            print("UZLoupe has been released.")
+        }
+    }
     
     internal init() {
         super.init(frame: CGRect(x: 0, y: 0, width: UZLoupe.radius * 2, height: UZLoupe.radius * 2))

@@ -11,7 +11,6 @@
 		148967A91E8A66B500F19D91 /* UZLoupe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148967A71E8A66B500F19D91 /* UZLoupe.swift */; };
 		148967AF1E8B77AD00F19D91 /* mona.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 148967AD1E8B77AD00F19D91 /* mona.ttf */; };
 		148967B31E8B9FD200F19D91 /* SampleCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148967B21E8B9FD200F19D91 /* SampleCell.swift */; };
-		148967B91E8BBF2700F19D91 /* WebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148967B81E8BBF2700F19D91 /* WebViewController.swift */; };
 		148967BB1E8E2C2900F19D91 /* source.json in Resources */ = {isa = PBXBuildFile; fileRef = 148967BA1E8E2C2900F19D91 /* source.json */; };
 		148967BD1E8E2C3B00F19D91 /* MainTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 148967BC1E8E2C3B00F19D91 /* MainTableViewController.swift */; };
 		14D75D451E84DB9E006EC27F /* UZTextView.h in Headers */ = {isa = PBXBuildFile; fileRef = 14D75D431E84DB9E006EC27F /* UZTextView.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -53,7 +52,6 @@
 		148967A71E8A66B500F19D91 /* UZLoupe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UZLoupe.swift; sourceTree = "<group>"; };
 		148967AD1E8B77AD00F19D91 /* mona.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = mona.ttf; sourceTree = "<group>"; };
 		148967B21E8B9FD200F19D91 /* SampleCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SampleCell.swift; sourceTree = "<group>"; };
-		148967B81E8BBF2700F19D91 /* WebViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebViewController.swift; sourceTree = "<group>"; };
 		148967BA1E8E2C2900F19D91 /* source.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = source.json; sourceTree = "<group>"; };
 		148967BC1E8E2C3B00F19D91 /* MainTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainTableViewController.swift; sourceTree = "<group>"; };
 		14D75D401E84DB9E006EC27F /* UZTextView.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UZTextView.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -124,7 +122,6 @@
 				14D75D531E84DCEC006EC27F /* AppDelegate.swift */,
 				148967BC1E8E2C3B00F19D91 /* MainTableViewController.swift */,
 				148967B21E8B9FD200F19D91 /* SampleCell.swift */,
-				148967B81E8BBF2700F19D91 /* WebViewController.swift */,
 				148967AD1E8B77AD00F19D91 /* mona.ttf */,
 				14D75D571E84DCEC006EC27F /* Main.storyboard */,
 				14D75D5A1E84DCEC006EC27F /* Assets.xcassets */,
@@ -300,7 +297,6 @@
 				14D75D541E84DCEC006EC27F /* AppDelegate.swift in Sources */,
 				148967B31E8B9FD200F19D91 /* SampleCell.swift in Sources */,
 				148967BD1E8E2C3B00F19D91 /* MainTableViewController.swift in Sources */,
-				148967B91E8BBF2700F19D91 /* WebViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

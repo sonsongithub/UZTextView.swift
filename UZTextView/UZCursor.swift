@@ -21,6 +21,12 @@ internal class UZCursor: UIView {
     /// Cursor's direction.
     private let direction: UZCursorDirection
     
+    deinit {
+        if UZTextView.checkMemoryLeak {
+            print("UZCursor has been released.")
+        }
+    }
+    
     private init(with aDirection: UZCursorDirection) {
         direction = aDirection
         super.init(frame: CGRect.zero)

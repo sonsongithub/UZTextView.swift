@@ -284,6 +284,9 @@ public protocol UZTextViewDelegate: class {
  Clickable and selectable text view for iOS/macOS/watchOS/tvOS
  */
 public class UZTextView: UIView {
+    /// debug flag
+    internal static let checkMemoryLeak = false
+    
     /// margin for tapping the characters.
     static let tapMargin = CGFloat(8)
     
@@ -325,8 +328,10 @@ public class UZTextView: UIView {
     /// The loupe for selecting text in the view.
     private let loupe = UZLoupe()
     
-    
     deinit {
+        if UZTextView.checkMemoryLeak {
+            print("UZTextView has been released.")
+        }
         loupe.removeFromSuperview()
     }
     

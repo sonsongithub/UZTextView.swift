@@ -8,6 +8,7 @@
 
 import UIKit
 import UZTextView
+import SafariServices
 
 struct Content {
     public let attributedString: NSAttributedString
@@ -81,8 +82,7 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
         guard let url = attribute[NSLinkAttributeName] as? URL else { return nil }
         
         previewingContext.sourceRect = rect
-        let controller = WebViewController(nibName: nil, bundle: nil)
-        controller.url = url
+        let controller = SFSafariViewController(url: url)
         
         return controller
     }
@@ -94,10 +94,8 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
     
     func textView(_ textView: UZTextView, didClickLinkAttribute attribute: Any) {
         if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] as? URL {
-            let controller = WebViewController(nibName: nil, bundle: nil)
-            let nav = UINavigationController(rootViewController: controller)
-            controller.url = link
-            present(nav, animated: true, completion: nil)
+            let controller = SFSafariViewController(url: link)
+            self.present(controller, animated: true, completion: nil)
         }
     }
     
@@ -112,10 +110,8 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
             }
             do {
                 let action = UIAlertAction(title: "Open", style: .default) { (_) in
-                    let controller = WebViewController(nibName: nil, bundle: nil)
-                    let nav = UINavigationController(rootViewController: controller)
-                    controller.url = link
-                    self.present(nav, animated: true, completion: nil)
+                    let controller = SFSafariViewController(url: link)
+                    self.present(controller, animated: true, completion: nil)
                 }
                 sheet.addAction(action)
             }

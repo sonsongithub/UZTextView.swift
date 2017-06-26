@@ -285,7 +285,7 @@ public protocol UZTextViewDelegate: class {
  */
 public class UZTextView: UIView {
     /// debug flag
-    internal static let checkMemoryLeak = false
+    public static var checkMemoryLeak = false
     
     /// margin for tapping the characters.
     static let tapMargin = CGFloat(8)

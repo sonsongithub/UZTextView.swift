@@ -34,9 +34,9 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
                     guard let margin = $0["margin"] as? CGFloat else { return nil}
                     
                     guard let data = body.data(using: .utf8) else { return nil }
-                    let options: [String: Any] = [
-                        NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType,
-                        NSCharacterEncodingDocumentAttribute: String.Encoding.utf8.rawValue
+                    let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+                        NSAttributedString.DocumentReadingOptionKey.documentType: NSAttributedString.DocumentType.html,
+                        NSAttributedString.DocumentReadingOptionKey.characterEncoding: String.Encoding.utf8.rawValue
                     ]
                     let inset = UIEdgeInsets(top: margin, left: margin, bottom: margin, right: margin)
                     let attributedString = try NSMutableAttributedString(data: data, options: options, documentAttributes: nil)
@@ -61,31 +61,29 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
     
     func previewingContext(_ previewingContext: UIViewControllerPreviewing,
                            viewControllerForLocation location: CGPoint) -> UIViewController? {
-        
         let cells: [SampleCell] = self.tableView.visibleCells
             .flatMap({ $0 as? SampleCell })
             .filter({
                 previewingContext.sourceView.convert($0.textView.frame, from: $0.textView).contains(location)
             })
-        let attributes: [[String: Any]] = cells.flatMap({
-                let locationInTextView = self.view.convert(location, to: $0.textView)
-            guard var attributes = $0.textView.attributes(at: locationInTextView) else { return nil }
-                if attributes[NSLinkAttributeName] as? URL != nil, let rect = attributes[UZTextViewLinkRect] as? CGRect {
-                    attributes["rect"] = previewingContext.sourceView.convert(rect, from: $0.textView)
-                    return attributes
-                } else {
-                    return nil
+        let linkAndRectArray: [(URL, CGRect)] = cells.flatMap({
+            let locationInTextView = self.view.convert(location, to: $0.textView)
+            guard let attributes = $0.textView.attributes(at: locationInTextView) else { return nil }
+            
+            switch attributes {
+            case .rect(let attribute, let rect):
+                if let url = attribute[.link] as? URL {
+                    return (url, rect)
                 }
-            })
+                return nil
+            default:
+                return nil
+            }
+        })
         
-        guard let attribute = attributes.first else { return nil }
-        
-        guard let rect = attribute["rect"] as? CGRect else { return nil }
-        guard let url = attribute[NSLinkAttributeName] as? URL else { return nil }
-        
-        previewingContext.sourceRect = rect
-        let controller = SFSafariViewController(url: url)
-        
+        guard let linkAndRect = linkAndRectArray.first else { return nil }
+        previewingContext.sourceRect = linkAndRect.1
+        let controller = SFSafariViewController(url: linkAndRect.0)
         return controller
     }
     
@@ -94,40 +92,33 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
         self.present(nav, animated: true, completion: nil)
     }
     
-    func textView(_ textView: UZTextView, didClickLinkAttribute attribute: Any) {
-        if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] as? URL {
-            let controller = SFSafariViewController(url: link)
+    func textView(_ textView: UZTextView, didClickLinkInfo info: UZTextViewAttributeInfo) {
+        if let url = info.attribute[.link] as? URL {
+            let controller = SFSafariViewController(url: url)
             self.present(controller, animated: true, completion: nil)
         }
     }
     
-    func textView(_ textView: UZTextView, didLongTapLinkAttribute attribute: Any) {
-        if let attribute = attribute as? [String: Any], let link = attribute[NSLinkAttributeName] as? URL {
-            let sheet = UIAlertController(title: "Link", message: link.absoluteString, preferredStyle: .actionSheet)
-            do {
-                let action = UIAlertAction(title: "Copy", style: .default) { (_) in
-                    print("copy")
-                }
-                sheet.addAction(action)
-            }
-            do {
-                let action = UIAlertAction(title: "Open", style: .default) { (_) in
-                    let controller = SFSafariViewController(url: link)
+    func textView(_ textView: UZTextView, didLongTapLinkInfo info: UZTextViewAttributeInfo) {
+        if let url = info.attribute[.link] as? URL {
+            let sheet = UIAlertController(title: "Link", message: url.absoluteString, preferredStyle: .actionSheet)
+            sheet.addAction(
+                UIAlertAction(title: "Copy", style: .default) { (_) in print("copy") }
+            )
+            sheet.addAction(
+                UIAlertAction(title: "Open", style: .default) { (_) in
+                    let controller = SFSafariViewController(url: url)
                     self.present(controller, animated: true, completion: nil)
                 }
-                sheet.addAction(action)
-            }
-            do {
-                let action = UIAlertAction(title: "Open in Safari", style: .default) { (_) in
-                    UIApplication.shared.open(link, options: [:], completionHandler: nil)
+            )
+            sheet.addAction(
+                UIAlertAction(title: "Open in Safari", style: .default) { (_) in
+                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
                 }
-                sheet.addAction(action)
-            }
-            do {
-                let action = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
-                }
-                sheet.addAction(action)
-            }
+            )
+            sheet.addAction(
+                UIAlertAction(title: "Cancel", style: .cancel) { (_) in }
+            )
             self.present(sheet, animated: true, completion: nil)
         }
     }

@@ -56,35 +56,41 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
             print(error)
         }
         
-        self.registerForPreviewing(with: self, sourceView: self.view)
+        if #available(iOS 9.0, *) {
+            self.registerForPreviewing(with: self, sourceView: self.view)
+        } else {
+        }
     }
     
     func previewingContext(_ previewingContext: UIViewControllerPreviewing,
                            viewControllerForLocation location: CGPoint) -> UIViewController? {
-        let cells: [SampleCell] = self.tableView.visibleCells
-            .flatMap({ $0 as? SampleCell })
-            .filter({
-                previewingContext.sourceView.convert($0.textView.frame, from: $0.textView).contains(location)
-            })
-        let linkAndRectArray: [(URL, CGRect)] = cells.flatMap({
-            let locationInTextView = self.view.convert(location, to: $0.textView)
-            guard let attributes = $0.textView.attributes(at: locationInTextView) else { return nil }
-            
-            switch attributes {
-            case .rect(let attribute, let rect):
-                if let url = attribute[.link] as? URL {
-                    return (url, rect)
+        if #available(iOS 9.0, *) {
+            let cells: [SampleCell] = self.tableView.visibleCells
+                .flatMap({ $0 as? SampleCell })
+                .filter({
+                    previewingContext.sourceView.convert($0.textView.frame, from: $0.textView).contains(location)
+                })
+            let linkAndRectArray: [(URL, CGRect)] = cells.flatMap({
+                let locationInTextView = self.view.convert(location, to: $0.textView)
+                guard let attributes = $0.textView.attributes(at: locationInTextView) else { return nil }
+                
+                switch attributes {
+                case .rect(let attribute, let rect):
+                    if let url = attribute[.link] as? URL {
+                        return (url, rect)
+                    }
+                    return nil
+                default:
+                    return nil
                 }
-                return nil
-            default:
-                return nil
-            }
-        })
-        
-        guard let linkAndRect = linkAndRectArray.first else { return nil }
-        previewingContext.sourceRect = linkAndRect.1
-        let controller = SFSafariViewController(url: linkAndRect.0)
-        return controller
+            })
+            guard let linkAndRect = linkAndRectArray.first else { return nil }
+            previewingContext.sourceRect = linkAndRect.1
+            let controller = SFSafariViewController(url: linkAndRect.0)
+            return controller
+        } else {
+            return nil
+        }
     }
     
     func previewingContext(_ previewingContext: UIViewControllerPreviewing, commit viewControllerToCommit: UIViewController) {
@@ -93,9 +99,12 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
     }
     
     func textView(_ textView: UZTextView, didClickLinkInfo info: UZTextViewAttributeInfo) {
-        if let url = info.attribute[.link] as? URL {
-            let controller = SFSafariViewController(url: url)
-            self.present(controller, animated: true, completion: nil)
+        if #available(iOS 9.0, *) {
+            if let url = info.attribute[.link] as? URL {
+                let controller = SFSafariViewController(url: url)
+                self.present(controller, animated: true, completion: nil)
+            }
+        } else {
         }
     }
     
@@ -105,17 +114,23 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
             sheet.addAction(
                 UIAlertAction(title: "Copy", style: .default) { (_) in print("copy") }
             )
-            sheet.addAction(
-                UIAlertAction(title: "Open", style: .default) { (_) in
-                    let controller = SFSafariViewController(url: url)
-                    self.present(controller, animated: true, completion: nil)
-                }
-            )
-            sheet.addAction(
-                UIAlertAction(title: "Open in Safari", style: .default) { (_) in
-                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
-                }
-            )
+            if #available(iOS 9.0, *) {
+                sheet.addAction(
+                    UIAlertAction(title: "Open", style: .default) { (_) in
+                        let controller = SFSafariViewController(url: url)
+                        self.present(controller, animated: true, completion: nil)
+                    }
+                )
+            } else {
+            }
+            if #available(iOS 10.0, *) {
+                sheet.addAction(
+                    UIAlertAction(title: "Open in Safari", style: .default) { (_) in
+                        UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                    }
+                )
+            } else {
+            }
             sheet.addAction(
                 UIAlertAction(title: "Cancel", style: .cancel) { (_) in }
             )

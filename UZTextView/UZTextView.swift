@@ -329,7 +329,7 @@ open class UZTextView: UIView {
     private var longPressGestureRecognizer: UILongPressGestureRecognizer?
     
     /// NSRange structure which contains the range user currently selects text. If no text is selected, this value is set to NSRange.notFound.
-    var selectedRange = NSRange.notFound
+    open var selectedRange = NSRange.notFound
     /// NSRange structure which contains the range user currently is tapping link object among the text. If no link object is selected, this value is set to NSRange.notFound.
     private var tappedLinkRange = NSRange.notFound
     
@@ -983,7 +983,7 @@ open class UZTextView: UIView {
      Show UIMenuController which handles selected string.
      - parameter point: CGPoint structure which contains the location at which user tapped.
      */
-    private func showUIMenuForSelectedString() {
+    open func showUIMenuForSelectedString() {
         let targetRect = rectangles(with: selectedRange)
             .map({
                 $0.toViewCoordiante(scale: scale, contentInset: contentInset)

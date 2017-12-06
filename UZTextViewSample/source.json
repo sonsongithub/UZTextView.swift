@@ -1,11 +1,11 @@
  [
   {
-  "body": "<font size=\"4\"><p><a href=\"https://letsencrypt.org\" sl-processed=\"1\">Let’sEncrypt</a>を使っ'て<a href=\"https://developers.line.me\" sl-processed=\"1\">LINE Bot</a>からの<span style=\"background-color:#ffcc99\">callback</span>を受けるサーバを作ったがダメで，さらにAWS API GatewayもLet’s Encrypt SSLを<strike>信用</strike>してなくて，大変だったというお話．</p><p>Let’s Encryptは，無料で使えるSSLの証明書取得サービスである．自動取得/更新がサーバに実装されており，それのためのサーバ側の更新スクリプトも配布されている．DNSをハックされる危険性や平文をネットワークに流す危険性が危惧される昨今，無料でSSLの証明書を利用できる趣味でサービスを開発したりするエンジニアの強い味方となっている．</p></font>",
+  "body": "<font size=\"4\"><p><a href=\"https://letsencrypt.org\" sl-processed=\"1\">Let’sEncrypt</a>を使っ'て<a href=\"https://developers.line.me\" sl-processed=\"1\">LINE Bot</a>からの<span style=\"background-color:#ffcc99\">callbackを受けるサーバを作ったがダメで</span>，さらにAWS API GatewayもLet’s Encrypt SSLを<strike>信用</strike>してなくて，大変だったというお話．</p><p>Let’s Encryptは，無料で使えるSSLの証明書取得サービスである．自動取得/更新がサーバに実装されており，それのためのサーバ側の更新スクリプトも配布されている．DNSをハックされる危険性や平文をネットワークに流す危険性が危惧される昨今，無料でSSLの証明書を利用できる趣味でサービスを開発したりするエンジニアの強い味方となっている．</p></font>",
   "aa": false,
   "margin": 5
   },
   {
-  "body": "<font size=\"5\"><p><a href=\"https://letsencrypt.org\" sl-processed=\"1\">Let’sEncrypt</a>を使っ'て<a href=\"https://developers.line.me\" sl-processed=\"1\">LINE Bot</a>からの<span style=\"background-color:#ffcc99\">callback</span>を受けるサーバを作ったがダメで，さらにAWS API GatewayもLet’s Encrypt SSLを<strike>信用</strike>してなくて，大変だったというお話．</p><p>Let’s Encryptは，無料で使えるSSLの証明書取得サービスである．自動取得/更新がサーバに実装されており，それのためのサーバ側の更新スクリプトも配布されている．DNSをハックされる危険性や平文をネットワークに流す危険性が危惧される昨今，無料でSSLの証明書を利用できる趣味でサービスを開発したりするエンジニアの強い味方となっている．</p></font>",
+  "body": "<font size=\"5\"><p><a href=\"https://letsencrypt.org\" sl-processed=\"1\">Let’sEncrypt</a>を使っ'て<a href=\"https://developers.line.me\" sl-processed=\"1\">LINE Bot</a>からの<span style=\"background-color:#ffcc99\">callbackを受けるサーバを作ったがダメで，さらにAWS API GatewayもLet’s Encrypt SSLを<strike>信用</strike>してなくて，大変だったというお話．</p><p>Let’s Encryptは，無料で使えるSSLの証明書取得サービスである．自動取得/更新がサーバに実装されており，それのためのサーバ側の更新スクリプトも配布されている．DNSをハックされる危険性や平文をネットワークに流す危険性が危惧される昨今，無料でSSLの証明書を利用できる趣味でサービスを開発したりするエンジニアの強い味方となっている．</p></font>",
   "aa": false,
   "margin": 0
   },

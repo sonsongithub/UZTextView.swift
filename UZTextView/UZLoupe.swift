@@ -12,7 +12,7 @@ import UIKit
  Search root view of the hierarchy in which the specified view is included recursively, if can not find it, return itself.
  - parameters view: A view over a UIWindow object.
  */
-fileprivate func rootViewOfHierarchy(including view: UIView) -> UIView {
+private func rootViewOfHierarchy(including view: UIView) -> UIView {
     guard let parent = view.superview else { return view }
     if parent.isKind(of: UIWindow.self) {
         return view

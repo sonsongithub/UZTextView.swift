@@ -191,7 +191,7 @@ extension UIGestureRecognizer {
 /**
  Typographic bounds of a CTLine.
  */
-fileprivate struct TypographicBounds {
+private struct TypographicBounds {
     let width: CGFloat
     let ascent: CGFloat
     let descent: CGFloat
@@ -203,7 +203,7 @@ fileprivate struct TypographicBounds {
  - parameter line: The line from which to obtain the typofrahics bounds.
  - returns: A TypographicBounds structure that contains attributes of specified line.
  */
-fileprivate func CTLineGetTypographicBounds(_ line: CTLine) -> TypographicBounds {
+private func CTLineGetTypographicBounds(_ line: CTLine) -> TypographicBounds {
     var ascent: CGFloat = 0
     var descent: CGFloat = 0
     var leading: CGFloat = 0
@@ -214,7 +214,7 @@ fileprivate func CTLineGetTypographicBounds(_ line: CTLine) -> TypographicBounds
 /**
  Property of line.
  */
-fileprivate struct LineInfo {
+private struct LineInfo {
     /// CTLine of a line.
     let line: CTLine
     /// Origin of a line.
@@ -240,7 +240,7 @@ fileprivate struct LineInfo {
  - parameter line: The line from which to obtain the string range.
  - returns: A NSRange structure that contains the range over the backing store string that spawned the glyphs, or if the function fails for any reason, an empty range.
  */
-fileprivate func CTLineGetStringNSRange(_ line: CTLine) -> NSRange {
+private func CTLineGetStringNSRange(_ line: CTLine) -> NSRange {
     let lineCFRange = CTLineGetStringRange(line)
     return NSRange(location: lineCFRange.location, length: lineCFRange.length)
 }
@@ -250,7 +250,7 @@ fileprivate func CTLineGetStringNSRange(_ line: CTLine) -> NSRange {
  - parameter frame: The frame whose line array is returned.
  - returns: Array object containing the LineInfo objects that have line object, origin and indices, or, if there are no lines in the frame, an array with no elements.
  */
-fileprivate func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
+private func CTFrameGetLineInfo(_ frame: CTFrame) -> [LineInfo] {
     guard let lines = CTFrameGetLines(frame) as? [CTLine] else { return [] }
     var lineOrigins = [CGPoint](repeating: .zero, count: lines.count)
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), &lineOrigins)
@@ -307,7 +307,7 @@ public protocol UZTextViewDelegate: class {
 /**
  Clickable and selectable text view for iOS/macOS/watchOS/tvOS
  */
-public class UZTextView: UIView {
+open class UZTextView: UIView {
     /// debug flag
     public static var checkMemoryLeak = false
     
@@ -397,7 +397,7 @@ public class UZTextView: UIView {
     
     // MARK: -
     
-    public override var tintColor: UIColor! {
+    open override var tintColor: UIColor! {
         didSet {
             selectedColor = tintColor.withAlphaComponent(0.2)
             tappedLinkColor = tintColor.withAlphaComponent(0.2)
@@ -408,11 +408,11 @@ public class UZTextView: UIView {
         }
     }
     
-    override public var frame: CGRect {
+    override open var frame: CGRect {
         didSet { updateLayout() }
     }
     
-    override public var bounds: CGRect {
+    override open var bounds: CGRect {
         didSet { updateLayout() }
     }
     
@@ -428,7 +428,7 @@ public class UZTextView: UIView {
         prepareSubviews()
     }
     
-    override public func draw(_ rect: CGRect) {
+    override open func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         
         // Offset
@@ -562,27 +562,27 @@ public class UZTextView: UIView {
     
     // MARK: -
    
-    public override func resignFirstResponder() -> Bool {
+    open override func resignFirstResponder() -> Bool {
         return super.resignFirstResponder()
     }
     
-    public override var canBecomeFirstResponder: Bool {
+    open override var canBecomeFirstResponder: Bool {
         return true
     }
     
-    public override func copy(_ sender: Any?) {
+    open override func copy(_ sender: Any?) {
         let stringToBeCopied = (self.string as NSString).substring(with: selectedRange)
         print(stringToBeCopied)
         UIPasteboard.general.string = stringToBeCopied
     }
     
-    public override func selectAll(_ sender: Any?) {
+    open override func selectAll(_ sender: Any?) {
         selectedRange = self.string.fullNSRange
         updateCursors()
         setNeedsDisplay()
     }
     
-    public override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
+    open override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         if action == #selector(UZTextView.copy(_:)) {
             return true
         } else if action == #selector(UZTextView.selectAll(_:)) {
@@ -593,7 +593,7 @@ public class UZTextView: UIView {
     
     // MARK: -
     
-    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
         
@@ -612,7 +612,7 @@ public class UZTextView: UIView {
         updateLoupe(touch: touch)
     }
     
-    public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    open override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
         
@@ -626,7 +626,7 @@ public class UZTextView: UIView {
         updateLoupe(touch: touch)
     }
     
-    public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+    open override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
         if cursorStatus != .none {
@@ -641,7 +641,7 @@ public class UZTextView: UIView {
         updateLoupe(touch: touch)
     }
     
-    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    open override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self, inset: contentInset, scale: scale)
         if cursorStatus != .none {
@@ -676,6 +676,7 @@ public class UZTextView: UIView {
         attributedString.enumerateAttribute(NSAttributedStringKey.backgroundColor, in: attributedString.fullNSRange, options: []) { (value, range, _) in
             guard let color = value as? UIColor else { return }
             color.setFill()
+            print(range)
             rectangles(with: range).forEach({
                 context.fill($0)
             })
@@ -996,7 +997,7 @@ public class UZTextView: UIView {
     }
     
     /**
-     Returns attributes as an dictionary from character at where user tapped.
+     Returns attributes as an UZTextViewAttributeInfo type at where user tapped.
      If character does not have any attributes, returns nil.
      - parameter point: CGPoint structure which contains location which user tapped.
      - returns: The attributes for the character at where user tapped.

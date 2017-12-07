@@ -1,6 +1,5 @@
 disabled_rules:
 - trailing_whitespace
-- valid_docs
 - type_name
 - variable_name
 - force_cast

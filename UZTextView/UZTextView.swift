@@ -963,7 +963,7 @@ open class UZTextView: UIView {
      - parameter range: Index range which specifies the characters.
      - returns: CGRect array which contains rectangles around specified characters. A CGRect object is generated each line if the characters extend more than two lines.
      */
-    private func rectangles(with range: NSRange) -> [CGRect] {
+    public func rectangles(with range: NSRange) -> [CGRect] {
         guard range.length > 0 else { return [] }
         return CTFrameGetLineInfo(ctframe)
         .flatMap({

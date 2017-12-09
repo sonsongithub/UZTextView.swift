@@ -963,7 +963,7 @@ open class UZTextView: UIView {
      - parameter range: Index range which specifies the characters.
      - returns: CGRect array which contains rectangles around specified characters. A CGRect object is generated each line if the characters extend more than two lines.
      */
-    public func rectangles(with range: NSRange) -> [CGRect] {
+    private func rectangles(with range: NSRange) -> [CGRect] {
         guard range.length > 0 else { return [] }
         return CTFrameGetLineInfo(ctframe)
         .flatMap({
@@ -980,19 +980,25 @@ open class UZTextView: UIView {
     }
     
     /**
-     Show UIMenuController which handles selected string.
-     - parameter point: CGPoint structure which contains the location at which user tapped.
+     Get rectangle contains all selected string.
      */
-    open func showUIMenuForSelectedString() {
-        let targetRect = rectangles(with: selectedRange)
+    public var rectForSelectedString: CGRect {
+        return rectangles(with: selectedRange)
             .map({
                 $0.toViewCoordiante(scale: scale, contentInset: contentInset)
             })
             .reduce(CGRect.null, { (result, rect) -> CGRect in
                 return rect.union(result)
             })
+    }
+    
+    /**
+     Show UIMenuController which handles selected string.
+     - parameter point: CGPoint structure which contains the location at which user tapped.
+     */
+    open func showUIMenuForSelectedString() {
         self.becomeFirstResponder()
-        UIMenuController.shared.setTargetRect(targetRect, in: self)
+        UIMenuController.shared.setTargetRect(self.rectForSelectedString, in: self)
         UIMenuController.shared.setMenuVisible(true, animated: true)
     }
     

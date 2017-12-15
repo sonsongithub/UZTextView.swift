@@ -9,30 +9,6 @@
 import UIKit
 import CoreText
 
-/**
- Data type to contain a dictionary of NSAttributedString object and location information of it.
- */
-public enum UZTextViewAttributeInfo {
-    /// data has only a dictionary of NSAttributedString object.
-    case attribute(attribute: [NSAttributedStringKey: Any])
-    /// data has a dictionary of NSAttributedString object and rectagle to which it's attached.
-    case rect(attribute: [NSAttributedStringKey: Any], rect: CGRect)
-    /// data has a dictionary of NSAttributedString object and index to which it's attached.
-    case range(attribute: [NSAttributedStringKey: Any], range: NSRange)
-    
-    /// Accessor for a dictionary of NSAttributedString object
-    public var attribute: [NSAttributedStringKey: Any] {
-        switch self {
-        case .attribute(let attr):
-            return attr
-        case .rect(let attr, _):
-            return attr
-        case .range(let attr, _):
-            return attr
-        }
-    }
-}
-
 extension Sequence where Iterator.Element == CGRect {
     fileprivate var union: CGRect {
         return reduce(CGRect.null, { (result, rect) -> CGRect in
@@ -282,14 +258,14 @@ public protocol UZTextViewDelegate: class {
      - parameter textView: The text view in which the link is tapped.
      - parameter info: The attributes for the linke at which user tapped.
      */
-    func textView(_ textView: UZTextView, didClickLinkInfo info: UZTextViewAttributeInfo)
+    func textView(_ textView: UZTextView, didClickLinkInfo info: UZTextView.UZTextViewAttributeInfo)
     
     /**
      Tells the delegate that the link which contains ```attribute``` was tapped longly.
      - parameter textView: The text view in which the link is longly tapped.
      - parameter info: The attributes for the linke at which user tapped.
      */
-    func textView(_ textView: UZTextView, didLongTapLinkInfo info: UZTextViewAttributeInfo)
+    func textView(_ textView: UZTextView, didLongTapLinkInfo info: UZTextView.UZTextViewAttributeInfo)
     
     /**
      Tells the delegate that selecting of the specified text view has begun.
@@ -351,6 +327,30 @@ open class UZTextView: UIView {
     private let rightCursor = UZCursor.createRightCursor()
     /// The loupe for selecting text in the view.
     private let loupe = UZLoupe()
+    
+    /**
+     Data type to contain a dictionary of NSAttributedString object and location information of it.
+     */
+    public enum UZTextViewAttributeInfo {
+        /// data has only a dictionary of NSAttributedString object.
+        case attribute(attribute: [NSAttributedStringKey: Any])
+        /// data has a dictionary of NSAttributedString object and rectagle to which it's attached.
+        case rect(attribute: [NSAttributedStringKey: Any], rect: CGRect)
+        /// data has a dictionary of NSAttributedString object and index to which it's attached.
+        case range(attribute: [NSAttributedStringKey: Any], range: NSRange)
+        
+        /// Accessor for a dictionary of NSAttributedString object
+        public var attribute: [NSAttributedStringKey: Any] {
+            switch self {
+            case .attribute(let attr):
+                return attr
+            case .rect(let attr, _):
+                return attr
+            case .range(let attr, _):
+                return attr
+            }
+        }
+    }
     
     deinit {
         if UZTextView.checkMemoryLeak {
@@ -1008,7 +1008,7 @@ open class UZTextView: UIView {
      - parameter point: CGPoint structure which contains location which user tapped.
      - returns: The attributes for the character at where user tapped.
      */
-    public func attributes(at point: CGPoint) -> UZTextViewAttributeInfo? {
+    public func attributes(at point: CGPoint) -> UZTextView.UZTextViewAttributeInfo? {
         let pointForText = point.toTextCoordiante(scale: scale, contentInset: contentInset)
         let index = characterIndex(at: pointForText)
         guard index != NSNotFound else { return nil }

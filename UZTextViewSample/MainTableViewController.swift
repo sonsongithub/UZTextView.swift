@@ -98,7 +98,7 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
         self.present(nav, animated: true, completion: nil)
     }
     
-    func textView(_ textView: UZTextView, didClickLinkInfo info: UZTextViewAttributeInfo) {
+    func textView(_ textView: UZTextView, didClickLinkInfo info: UZTextView.UZTextViewAttributeInfo) {
         if #available(iOS 9.0, *) {
             if let url = info.attribute[.link] as? URL {
                 let controller = SFSafariViewController(url: url)
@@ -108,7 +108,7 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
         }
     }
     
-    func textView(_ textView: UZTextView, didLongTapLinkInfo info: UZTextViewAttributeInfo) {
+    func textView(_ textView: UZTextView, didLongTapLinkInfo info: UZTextView.UZTextViewAttributeInfo) {
         if let url = info.attribute[.link] as? URL {
             let sheet = UIAlertController(title: "Link", message: url.absoluteString, preferredStyle: .actionSheet)
             sheet.addAction(

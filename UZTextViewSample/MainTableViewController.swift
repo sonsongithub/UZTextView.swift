@@ -72,14 +72,10 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
                 })
             let linkAndRectArray: [(URL, CGRect)] = cells.flatMap({
                 let locationInTextView = self.view.convert(location, to: $0.textView)
-                guard let attributes = $0.textView.attributes(at: locationInTextView) else { return nil }
-                
-                switch attributes {
-                case .rect(let attribute, let rect):
-                    if let url = attribute[.link] as? URL {
-                        return (url, rect)
-                    }
-                    return nil
+                guard let info = $0.textView.attributes(at: locationInTextView) else { return nil }
+                switch info.attribute[.link] {
+                case (let url as URL):
+                    return (url, info.rect)
                 default:
                     return nil
                 }

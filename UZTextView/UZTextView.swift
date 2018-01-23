@@ -331,25 +331,10 @@ open class UZTextView: UIView {
     /**
      Data type to contain a dictionary of NSAttributedString object and location information of it.
      */
-    public enum UZTextViewAttributeInfo {
-        /// data has only a dictionary of NSAttributedString object.
-        case attribute(attribute: [NSAttributedStringKey: Any])
-        /// data has a dictionary of NSAttributedString object and rectagle to which it's attached.
-        case rect(attribute: [NSAttributedStringKey: Any], rect: CGRect)
-        /// data has a dictionary of NSAttributedString object and index to which it's attached.
-        case range(attribute: [NSAttributedStringKey: Any], range: NSRange)
-        
-        /// Accessor for a dictionary of NSAttributedString object
-        public var attribute: [NSAttributedStringKey: Any] {
-            switch self {
-            case .attribute(let attr):
-                return attr
-            case .rect(let attr, _):
-                return attr
-            case .range(let attr, _):
-                return attr
-            }
-        }
+    public struct UZTextViewAttributeInfo {
+        public let attribute: [NSAttributedStringKey: Any]
+        public let range: NSRange
+        public let rect: CGRect
     }
     
     deinit {
@@ -832,10 +817,11 @@ open class UZTextView: UIView {
             for i in tappedLinkRange.arange {
                 var effectiveRange = NSRange.notFound
                 let attribute = attributedString.attributes(at: i, effectiveRange: &effectiveRange)
+                let rect = rectangles(with: effectiveRange).union
                 guard attribute[.link] != nil else { continue }
                 if let delegate = delegate {
-                    let attr = UZTextViewAttributeInfo.attribute(attribute: attribute)
-                    delegate.textView(self, didClickLinkInfo: attr)
+                    let info = UZTextViewAttributeInfo(attribute: attribute, range: effectiveRange, rect: rect)
+                    delegate.textView(self, didClickLinkInfo: info)
                 }
                 break
             }
@@ -915,9 +901,10 @@ open class UZTextView: UIView {
             var effectiveRange = NSRange.notFound
             if index != NSNotFound {
                 var attribute = self.attributedString.attributes(at: index, effectiveRange: &effectiveRange)
+                let rect = rectangles(with: effectiveRange).union
                 if attribute[.link] != nil {
                     if let delegate = delegate {
-                        let info = UZTextViewAttributeInfo.range(attribute: attribute, range: effectiveRange)
+                        let info = UZTextViewAttributeInfo(attribute: attribute, range: effectiveRange, rect: rect)
                         delegate.textView(self, didLongTapLinkInfo: info)
                     }
                 } else {
@@ -966,17 +953,17 @@ open class UZTextView: UIView {
     private func rectangles(with range: NSRange) -> [CGRect] {
         guard range.length > 0 else { return [] }
         return CTFrameGetLineInfo(ctframe)
-        .flatMap({
-            let lineRect = $0.getRect(contentSize: contentSize)
-            let intersect = NSIntersectionRange($0.range, range)
-            if intersect.length > 0 {
-                let leftOffset = CTLineGetOffsetForStringIndex($0.line, intersect.location, nil)
-                let rightOffset = CTLineGetOffsetForStringIndex($0.line, NSMaxRange(intersect), nil)
-                return CGRect(x: $0.origin.x + leftOffset, y: lineRect.minY, width: rightOffset - leftOffset, height: lineRect.size.height)
-            } else {
-                return nil
-            }
-        })
+            .flatMap({
+                let lineRect = $0.getRect(contentSize: contentSize)
+                let intersect = NSIntersectionRange($0.range, range)
+                if intersect.length > 0 {
+                    let leftOffset = CTLineGetOffsetForStringIndex($0.line, intersect.location, nil)
+                    let rightOffset = CTLineGetOffsetForStringIndex($0.line, NSMaxRange(intersect), nil)
+                    return CGRect(x: $0.origin.x + leftOffset, y: lineRect.minY, width: rightOffset - leftOffset, height: lineRect.size.height)
+                } else {
+                    return nil
+                }
+            })
     }
     
     /**
@@ -1016,7 +1003,7 @@ open class UZTextView: UIView {
         let attributes = attributedString.attributes(at: index, effectiveRange: &effectiveRange)
         let rect = rectangles(with: effectiveRange).union
         let rectConverted = rect.toViewCoordiante(scale: scale, contentInset: contentInset)
-        let attr = UZTextViewAttributeInfo.rect(attribute: attributes, rect: rectConverted)
+        let attr = UZTextViewAttributeInfo(attribute: attributes, range: effectiveRange, rect: rectConverted)
         return attr
     }
     

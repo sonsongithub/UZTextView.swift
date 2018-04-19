@@ -28,7 +28,7 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
         do {
             let data = try Data(contentsOf: Bundle.main.url(forResource: "source", withExtension: "json")!)
             if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
-                self.contents = try json.flatMap({
+                self.contents = try json.compactMap({
                     guard let body = $0["body"] as? String else { return nil }
                     guard let aa = $0["aa"] as? Bool else { return nil }
                     guard let margin = $0["margin"] as? CGFloat else { return nil}
@@ -66,11 +66,11 @@ class MainTableViewController: UITableViewController, UZTextViewDelegate, UIView
                            viewControllerForLocation location: CGPoint) -> UIViewController? {
         if #available(iOS 9.0, *) {
             let cells: [SampleCell] = self.tableView.visibleCells
-                .flatMap({ $0 as? SampleCell })
+                .compactMap({ $0 as? SampleCell })
                 .filter({
                     previewingContext.sourceView.convert($0.textView.frame, from: $0.textView).contains(location)
                 })
-            let linkAndRectArray: [(URL, CGRect)] = cells.flatMap({
+            let linkAndRectArray: [(URL, CGRect)] = cells.compactMap({
                 let locationInTextView = self.view.convert(location, to: $0.textView)
                 guard let info = $0.textView.attributes(at: locationInTextView) else { return nil }
                 switch info.attribute[.link] {

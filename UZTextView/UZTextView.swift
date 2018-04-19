@@ -953,7 +953,7 @@ open class UZTextView: UIView {
     private func rectangles(with range: NSRange) -> [CGRect] {
         guard range.length > 0 else { return [] }
         return CTFrameGetLineInfo(ctframe)
-            .flatMap({
+            .compactMap({
                 let lineRect = $0.getRect(contentSize: contentSize)
                 let intersect = NSIntersectionRange($0.range, range)
                 if intersect.length > 0 {
